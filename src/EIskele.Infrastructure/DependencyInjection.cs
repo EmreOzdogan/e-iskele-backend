@@ -1,0 +1,36 @@
+using EIskele.Application.Common.Audit;
+using EIskele.Infrastructure.Audit;
+using Microsoft.Extensions.DependencyInjection;
+
+using Microsoft.AspNetCore.Authorization;
+using EIskele.Application.Common.Security;
+using EIskele.Infrastructure.Security;
+
+namespace EIskele.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+    {
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<EIskele.Application.Common.Files.IFileStorageService, EIskele.Infrastructure.Files.LocalFileStorageService>();
+        
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+        services.AddScoped<EIskele.Infrastructure.Notifications.INotificationSender, EIskele.Infrastructure.Notifications.EmailNotificationSender>();
+        services.AddScoped<EIskele.Application.Common.Notifications.INotificationService, EIskele.Infrastructure.Notifications.NotificationService>();
+
+        services.AddScoped<EIskele.Application.Common.Settings.ISettingsService, EIskele.Infrastructure.Settings.SettingsService>();
+
+        // Application Core Services
+        services.AddScoped<EIskele.Application.Auth.IAuthService, EIskele.Infrastructure.Services.AuthService>();
+        services.AddScoped<EIskele.Application.Captains.ICaptainService, EIskele.Infrastructure.Services.CaptainService>();
+        services.AddScoped<EIskele.Application.Boats.IBoatService, EIskele.Infrastructure.Services.BoatService>();
+        services.AddScoped<EIskele.Application.Reservations.IReservationService, EIskele.Infrastructure.Services.ReservationService>();
+        services.AddScoped<EIskele.Application.Availability.IAvailabilityService, EIskele.Infrastructure.Services.AvailabilityService>();
+
+        return services;
+    }
+}
