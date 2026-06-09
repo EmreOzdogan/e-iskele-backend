@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<EIskele.Application.Boats.IBoatService, EIskele.Infrastructure.Services.BoatService>();
         services.AddScoped<EIskele.Application.Reservations.IReservationService, EIskele.Infrastructure.Services.ReservationService>();
         services.AddScoped<EIskele.Application.Availability.IAvailabilityService, EIskele.Infrastructure.Services.AvailabilityService>();
+        services.AddScoped<EIskele.Application.Users.Services.IAdminUserService, EIskele.Infrastructure.Services.AdminUserService>();
 
         return services;
     }

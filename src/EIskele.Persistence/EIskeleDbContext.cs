@@ -25,7 +25,10 @@ public class EIskeleDbContext : IdentityDbContext<ApplicationUser, ApplicationRo
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
-
+    public DbSet<UserAdminNote> UserAdminNotes => Set<UserAdminNote>();
+    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<Payment> Payments => Set<Payment>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

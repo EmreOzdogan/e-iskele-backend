@@ -10,6 +10,7 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
     {
         builder.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
         builder.Property(x => x.LastName).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.UserNo).HasMaxLength(50);
         
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
@@ -53,5 +54,50 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
         builder.HasOne(x => x.Customer).WithMany(x => x.Reservations).HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Boat).WithMany(x => x.Reservations).HasForeignKey(x => x.BoatId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.TourPackage).WithMany(x => x.Reservations).HasForeignKey(x => x.TourPackageId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class UserAdminNoteConfiguration : IEntityTypeConfiguration<UserAdminNote>
+{
+    public void Configure(EntityTypeBuilder<UserAdminNote> builder)
+    {
+        builder.HasOne(x => x.User).WithMany(x => x.AdminNotes).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class ReviewConfiguration : IEntityTypeConfiguration<Review>
+{
+    public void Configure(EntityTypeBuilder<Review> builder)
+    {
+        builder.Property(x => x.ReviewNo).HasMaxLength(50);
+        builder.HasQueryFilter(x => !x.IsDeleted);
+        
+        builder.HasOne(x => x.Customer).WithMany(x => x.Reviews).HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Boat).WithMany().HasForeignKey(x => x.BoatId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.TourPackage).WithMany().HasForeignKey(x => x.TourPackageId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class SupportTicketConfiguration : IEntityTypeConfiguration<SupportTicket>
+{
+    public void Configure(EntityTypeBuilder<SupportTicket> builder)
+    {
+        builder.Property(x => x.TicketNo).HasMaxLength(50);
+        builder.HasQueryFilter(x => !x.IsDeleted);
+        
+        builder.HasOne(x => x.User).WithMany(x => x.SupportTickets).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
+{
+    public void Configure(EntityTypeBuilder<Payment> builder)
+    {
+        builder.Property(x => x.PaymentNo).HasMaxLength(50);
+        builder.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+        builder.Property(x => x.PlatformCommission).HasColumnType("decimal(18,2)");
+        builder.Property(x => x.CaptainEarnings).HasColumnType("decimal(18,2)");
+        
+        builder.HasOne(x => x.Reservation).WithMany().HasForeignKey(x => x.ReservationId).OnDelete(DeleteBehavior.Restrict);
     }
 }

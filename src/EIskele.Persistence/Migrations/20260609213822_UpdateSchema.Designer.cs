@@ -4,6 +4,7 @@ using EIskele.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EIskele.Persistence.Migrations
 {
     [DbContext(typeof(EIskeleDbContext))]
-    partial class EIskeleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260609213822_UpdateSchema")]
+    partial class UpdateSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -75,9 +78,6 @@ namespace EIskele.Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<int>("ActiveSessionCount")
-                        .HasColumnType("int");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -101,9 +101,6 @@ namespace EIskele.Persistence.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("EmailVerifiedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -112,19 +109,10 @@ namespace EIskele.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("LastLoginAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastLoginIp")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime?>("LastPasswordChangedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -149,23 +137,8 @@ namespace EIskele.Persistence.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("PhoneVerifiedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ProfileImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RegistrationSource")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RiskStatus")
-                        .HasColumnType("int");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
@@ -179,14 +152,6 @@ namespace EIskele.Persistence.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("UserNo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("VerificationStatus")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -255,10 +220,6 @@ namespace EIskele.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -611,60 +572,6 @@ namespace EIskele.Persistence.Migrations
                     b.ToTable("NotificationTemplates");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.Payment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("CaptainEarnings")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("PaymentMethod")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PaymentNo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<decimal>("PlatformCommission")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ProviderTransactionId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ReservationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReservationId");
-
-                    b.ToTable("Payments");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.Permission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -761,68 +668,6 @@ namespace EIskele.Persistence.Migrations
                     b.HasIndex("TourPackageId");
 
                     b.ToTable("Reservations");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.Review", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BoatId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ReviewNo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("TourPackageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BoatId");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("TourPackageId");
-
-                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("EIskele.Domain.Entities.RolePermission", b =>
@@ -940,61 +785,6 @@ namespace EIskele.Persistence.Migrations
                     b.ToTable("StoredFiles");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.SupportTicket", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Category")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TicketNo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("SupportTickets");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.SystemSetting", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1108,41 +898,6 @@ namespace EIskele.Persistence.Migrations
                     b.HasIndex("BoatId");
 
                     b.ToTable("TourPackages");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserAdminNote", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Note")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("NoteType")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserAdminNotes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1289,17 +1044,6 @@ namespace EIskele.Persistence.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.Payment", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.Reservation", "Reservation")
-                        .WithMany()
-                        .HasForeignKey("ReservationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Reservation");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.Reservation", b =>
                 {
                     b.HasOne("EIskele.Domain.Entities.Boat", "Boat")
@@ -1316,33 +1060,6 @@ namespace EIskele.Persistence.Migrations
 
                     b.HasOne("EIskele.Domain.Entities.TourPackage", "TourPackage")
                         .WithMany("Reservations")
-                        .HasForeignKey("TourPackageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Boat");
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("TourPackage");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.Review", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.Boat", "Boat")
-                        .WithMany()
-                        .HasForeignKey("BoatId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EIskele.Domain.Entities.ApplicationUser", "Customer")
-                        .WithMany("Reviews")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EIskele.Domain.Entities.TourPackage", "TourPackage")
-                        .WithMany()
                         .HasForeignKey("TourPackageId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1373,17 +1090,6 @@ namespace EIskele.Persistence.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.SupportTicket", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("SupportTickets")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.TourPackage", b =>
                 {
                     b.HasOne("EIskele.Domain.Entities.Boat", "Boat")
@@ -1393,17 +1099,6 @@ namespace EIskele.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Boat");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserAdminNote", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("AdminNotes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1459,15 +1154,9 @@ namespace EIskele.Persistence.Migrations
 
             modelBuilder.Entity("EIskele.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.Navigation("AdminNotes");
-
                     b.Navigation("Captain");
 
                     b.Navigation("Reservations");
-
-                    b.Navigation("Reviews");
-
-                    b.Navigation("SupportTickets");
                 });
 
             modelBuilder.Entity("EIskele.Domain.Entities.Boat", b =>
