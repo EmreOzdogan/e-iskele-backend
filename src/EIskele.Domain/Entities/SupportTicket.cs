@@ -16,10 +16,10 @@ public class SupportTicket : BaseEntity, IAuditableEntity, ISoftDeletableEntity
     public SupportTicketStatus Status { get; set; } = SupportTicketStatus.Open;
     
     // IAuditableEntity
-    public DateTime CreatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public Guid? UpdatedBy { get; set; }
+    public new DateTime CreatedAt { get; set; }
+    public new Guid? CreatedBy { get; set; }
+    public new DateTime? UpdatedAt { get; set; }
+    public new Guid? UpdatedBy { get; set; }
     
     // ISoftDeletableEntity
     public bool IsDeleted { get; set; }

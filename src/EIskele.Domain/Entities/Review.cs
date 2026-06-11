@@ -22,10 +22,10 @@ public class Review : BaseEntity, IAuditableEntity, ISoftDeletableEntity
     public ReviewStatus Status { get; set; } = ReviewStatus.InReview;
     
     // IAuditableEntity
-    public DateTime CreatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public Guid? UpdatedBy { get; set; }
+    public new DateTime CreatedAt { get; set; }
+    public new Guid? CreatedBy { get; set; }
+    public new DateTime? UpdatedAt { get; set; }
+    public new Guid? UpdatedBy { get; set; }
     
     // ISoftDeletableEntity
     public bool IsDeleted { get; set; }

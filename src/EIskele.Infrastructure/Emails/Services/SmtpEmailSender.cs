@@ -44,7 +44,7 @@ public class SmtpEmailSender : IEmailSender
         using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authResult.AccessToken);
 
-        object replyTo = string.IsNullOrEmpty(dto.ReplyToEmail) ? (object)null : new[]
+        object? replyTo = string.IsNullOrEmpty(dto.ReplyToEmail) ? null : new[]
         {
             new { emailAddress = new { address = dto.ReplyToEmail } }
         };

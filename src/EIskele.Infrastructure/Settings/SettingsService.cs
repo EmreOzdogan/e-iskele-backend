@@ -436,7 +436,7 @@ public class SettingsService : ISettingsService
 
             var assembly = typeof(SettingsService).Assembly;
             using var logoStream = assembly.GetManifestResourceStream("EIskele.Infrastructure.Resources.e-iskele_logo.png");
-            byte[] logoBytes = null;
+            byte[]? logoBytes = null;
             if (logoStream != null)
             {
                 using var ms = new System.IO.MemoryStream();
@@ -526,5 +526,235 @@ public class SettingsService : ISettingsService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return EIskele.Application.Common.Results.Result.Success();
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result<SecuritySettingsDto>> GetSecuritySettingsAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
+        
+        int GetValueInt(string key, int def) => int.TryParse(settings.FirstOrDefault(s => s.Key == key)?.Value, out var val) ? val : def;
+        bool GetValueBool(string key, bool def) => bool.TryParse(settings.FirstOrDefault(s => s.Key == key)?.Value, out var val) ? val : def;
+
+        var dto = new SecuritySettingsDto
+        {
+            AdminSessionMinutes = GetValueInt("Security.AdminSessionMinutes", 60),
+            RefreshTokenDays = GetValueInt("Security.RefreshTokenDays", 7),
+            MaxFailedLoginAttempts = GetValueInt("Security.MaxFailedLoginAttempts", 5),
+            AccountLockoutMinutes = GetValueInt("Security.AccountLockoutMinutes", 15),
+            PasswordMinimumLength = GetValueInt("Security.PasswordMinimumLength", 8),
+            RequirePasswordComplexity = GetValueBool("Security.RequirePasswordComplexity", true),
+            AuditLogEnabled = GetValueBool("Security.AuditLogEnabled", true)
+        };
+
+        return EIskele.Application.Common.Results.Result<SecuritySettingsDto>.Success(dto);
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result> UpdateSecuritySettingsAsync(SecuritySettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
+
+        void UpdateValue(string key, string value, string valueType)
+        {
+            var setting = settings.FirstOrDefault(s => s.Key == key);
+            if (setting == null)
+            {
+                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting
+                {
+                    Key = key,
+                    Value = value,
+                    ValueType = valueType,
+                    Group = "Security",
+                    Description = "",
+                    IsEditable = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = currentUserId
+                });
+            }
+            else
+            {
+                if (setting.Value != value)
+                {
+                    setting.Value = value;
+                    setting.UpdatedAt = DateTime.UtcNow;
+                    setting.UpdatedBy = currentUserId;
+                }
+            }
+        }
+
+        UpdateValue("Security.AdminSessionMinutes", dto.AdminSessionMinutes.ToString(), "Number");
+        UpdateValue("Security.RefreshTokenDays", dto.RefreshTokenDays.ToString(), "Number");
+        UpdateValue("Security.MaxFailedLoginAttempts", dto.MaxFailedLoginAttempts.ToString(), "Number");
+        UpdateValue("Security.AccountLockoutMinutes", dto.AccountLockoutMinutes.ToString(), "Number");
+        UpdateValue("Security.PasswordMinimumLength", dto.PasswordMinimumLength.ToString(), "Number");
+        UpdateValue("Security.RequirePasswordComplexity", dto.RequirePasswordComplexity.ToString(), "Boolean");
+        UpdateValue("Security.AuditLogEnabled", dto.AuditLogEnabled.ToString(), "Boolean");
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return EIskele.Application.Common.Results.Result.Success();
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result<PaymentSettingsDto>> GetPaymentSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
+        
+        bool GetValueBool(string key, bool def) => bool.TryParse(settings.FirstOrDefault(s => s.Key == key)?.Value, out var val) ? val : def;
+        string GetValueString(string key, string def) => settings.FirstOrDefault(s => s.Key == key)?.Value ?? def;
+
+        var dto = new PaymentSettingsDto
+        {
+            PaymentEnabled = GetValueBool("Payment.PaymentEnabled", false),
+            PaymentProvider = GetValueString("Payment.PaymentProvider", "none"),
+            PaymentTestMode = GetValueBool("Payment.PaymentTestMode", true),
+            Require3DSecure = GetValueBool("Payment.Require3DSecure", true),
+            DepositPaymentEnabled = GetValueBool("Payment.DepositPaymentEnabled", true),
+            FullPaymentEnabled = GetValueBool("Payment.FullPaymentEnabled", false),
+            RefundManagementEnabled = GetValueBool("Payment.RefundManagementEnabled", false)
+        };
+
+        return EIskele.Application.Common.Results.Result<PaymentSettingsDto>.Success(dto);
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result> UpdatePaymentSettingsAsync(PaymentSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
+
+        void UpdateValue(string key, string value, string valueType)
+        {
+            var setting = settings.FirstOrDefault(s => s.Key == key);
+            if (setting == null)
+            {
+                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting { Key = key, Value = value, ValueType = valueType, Group = "Payment", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId });
+            }
+            else if (setting.Value != value)
+            {
+                setting.Value = value; setting.UpdatedAt = DateTime.UtcNow; setting.UpdatedBy = currentUserId;
+            }
+        }
+
+        UpdateValue("Payment.PaymentEnabled", dto.PaymentEnabled.ToString(), "Boolean");
+        UpdateValue("Payment.PaymentProvider", dto.PaymentProvider, "String");
+        UpdateValue("Payment.PaymentTestMode", dto.PaymentTestMode.ToString(), "Boolean");
+        UpdateValue("Payment.Require3DSecure", dto.Require3DSecure.ToString(), "Boolean");
+        UpdateValue("Payment.DepositPaymentEnabled", dto.DepositPaymentEnabled.ToString(), "Boolean");
+        UpdateValue("Payment.FullPaymentEnabled", dto.FullPaymentEnabled.ToString(), "Boolean");
+        UpdateValue("Payment.RefundManagementEnabled", dto.RefundManagementEnabled.ToString(), "Boolean");
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return EIskele.Application.Common.Results.Result.Success();
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result<SmsSettingsDto>> GetSmsSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
+        
+        bool GetValueBool(string key, bool def) => bool.TryParse(settings.FirstOrDefault(s => s.Key == key)?.Value, out var val) ? val : def;
+        string GetValueString(string key, string def) => settings.FirstOrDefault(s => s.Key == key)?.Value ?? def;
+
+        var dto = new SmsSettingsDto
+        {
+            SmsEnabled = GetValueBool("Sms.SmsEnabled", false),
+            SmsProvider = GetValueString("Sms.SmsProvider", "none"),
+            SmsSenderTitle = GetValueString("Sms.SmsSenderTitle", "EISKELE")
+        };
+
+        return EIskele.Application.Common.Results.Result<SmsSettingsDto>.Success(dto);
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result> UpdateSmsSettingsAsync(SmsSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
+
+        void UpdateValue(string key, string value, string valueType)
+        {
+            var setting = settings.FirstOrDefault(s => s.Key == key);
+            if (setting == null)
+            {
+                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting { Key = key, Value = value, ValueType = valueType, Group = "Sms", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId });
+            }
+            else if (setting.Value != value)
+            {
+                setting.Value = value; setting.UpdatedAt = DateTime.UtcNow; setting.UpdatedBy = currentUserId;
+            }
+        }
+
+        UpdateValue("Sms.SmsEnabled", dto.SmsEnabled.ToString(), "Boolean");
+        UpdateValue("Sms.SmsProvider", dto.SmsProvider, "String");
+        UpdateValue("Sms.SmsSenderTitle", dto.SmsSenderTitle, "String");
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return EIskele.Application.Common.Results.Result.Success();
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result<MaintenanceModeSettingsDto>> GetMaintenanceModeSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
+        
+        bool GetValueBool(string key, bool def) => bool.TryParse(settings.FirstOrDefault(s => s.Key == key)?.Value, out var val) ? val : def;
+        string GetValueString(string key, string def) => settings.FirstOrDefault(s => s.Key == key)?.Value ?? def;
+
+        var dto = new MaintenanceModeSettingsDto
+        {
+            MaintenanceModeEnabled = GetValueBool("Maintenance.MaintenanceModeEnabled", false),
+            MaintenanceMessage = GetValueString("Maintenance.MaintenanceMessage", "e-iskele kısa süreli bakım nedeniyle geçici olarak hizmet veremiyor."),
+            MaintenanceAffectsCustomerWeb = GetValueBool("Maintenance.MaintenanceAffectsCustomerWeb", true),
+            MaintenanceAffectsCaptainHub = GetValueBool("Maintenance.MaintenanceAffectsCaptainHub", true),
+            MaintenanceAffectsAdminPanel = GetValueBool("Maintenance.MaintenanceAffectsAdminPanel", false),
+            MaintenanceAffectsPublicApi = GetValueBool("Maintenance.MaintenanceAffectsPublicApi", true)
+        };
+
+        return EIskele.Application.Common.Results.Result<MaintenanceModeSettingsDto>.Success(dto);
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result> UpdateMaintenanceModeSettingsAsync(MaintenanceModeSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    {
+        var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
+
+        void UpdateValue(string key, string value, string valueType)
+        {
+            var setting = settings.FirstOrDefault(s => s.Key == key);
+            if (setting == null)
+            {
+                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting { Key = key, Value = value, ValueType = valueType, Group = "Maintenance", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId });
+            }
+            else if (setting.Value != value)
+            {
+                setting.Value = value; setting.UpdatedAt = DateTime.UtcNow; setting.UpdatedBy = currentUserId;
+            }
+        }
+
+        UpdateValue("Maintenance.MaintenanceModeEnabled", dto.MaintenanceModeEnabled.ToString(), "Boolean");
+        UpdateValue("Maintenance.MaintenanceMessage", dto.MaintenanceMessage, "String");
+        UpdateValue("Maintenance.MaintenanceAffectsCustomerWeb", dto.MaintenanceAffectsCustomerWeb.ToString(), "Boolean");
+        UpdateValue("Maintenance.MaintenanceAffectsCaptainHub", dto.MaintenanceAffectsCaptainHub.ToString(), "Boolean");
+        UpdateValue("Maintenance.MaintenanceAffectsAdminPanel", dto.MaintenanceAffectsAdminPanel.ToString(), "Boolean");
+        UpdateValue("Maintenance.MaintenanceAffectsPublicApi", dto.MaintenanceAffectsPublicApi.ToString(), "Boolean");
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return EIskele.Application.Common.Results.Result.Success();
+    }
+
+    public async Task<EIskele.Application.Common.Results.Result<System.Collections.Generic.List<SettingsAuditLogDto>>> GetSettingsAuditLogsAsync(CancellationToken cancellationToken = default)
+    {
+        var logs = await _dbContext.AuditLogs
+            .AsNoTracking()
+            .Where(a => a.EntityType == "SystemSetting")
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(50)
+            .Select(a => new SettingsAuditLogDto
+            {
+                Id = a.Id.ToString(),
+                Action = a.Action,
+                SettingGroup = "System Settings", // Bu değer log verilerinden daha da detaylandırılabilir
+                OldValue = a.OldValue ?? "",
+                NewValue = a.NewValue ?? "",
+                ActorName = a.ActorUserId.ToString() ?? "",
+                ActorIp = a.IpAddress ?? "",
+                CreatedAt = a.CreatedAt,
+                Status = "success"
+            })
+            .ToListAsync(cancellationToken);
+
+        return EIskele.Application.Common.Results.Result<System.Collections.Generic.List<SettingsAuditLogDto>>.Success(logs);
     }
 }
