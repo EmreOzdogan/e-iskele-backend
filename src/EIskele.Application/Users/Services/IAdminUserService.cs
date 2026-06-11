@@ -10,4 +10,6 @@ public interface IAdminUserService
     Task<Result> UpdateUserStatusAsync(Guid id, UpdateUserStatusRequest request, Guid currentUserId, CancellationToken cancellationToken = default);
     Task<Result> UpdateUserRolesAsync(Guid id, UpdateUserRolesRequest request, Guid currentUserId, CancellationToken cancellationToken = default);
     Task<Result> DeleteUserAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken = default);
+    Task<Result<UserSecurityInfoDto>> GetUserSecurityInfoAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result> CreateAdminUserAsync(CreateAdminUserRequest request, Guid currentUserId, CancellationToken cancellationToken = default);
 }

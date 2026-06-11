@@ -247,6 +247,90 @@ public class AdminUserService : IAdminUserService
         return Result.Success();
     }
 
+    public async Task<Result<UserSecurityInfoDto>> GetUserSecurityInfoAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user == null)
+        {
+            return Result<UserSecurityInfoDto>.Failure(new Error("UserNotFound", "Kullanıcı bulunamadı."));
+        }
+
+        var isLocked = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
+
+        var dto = new UserSecurityInfoDto
+        {
+            EmailVerified = user.EmailConfirmed,
+            PhoneVerified = user.PhoneNumberConfirmed,
+            TwoFactorEnabled = user.TwoFactorEnabled,
+            LastLoginAt = user.LastLoginAt,
+            LastLoginIp = user.LastLoginIp,
+            FailedLoginAttempts = user.AccessFailedCount,
+            IsLocked = isLocked,
+            LastPasswordChangedAt = user.LastPasswordChangedAt,
+            ActiveSessionCount = user.ActiveSessionCount
+        };
+
+        return Result<UserSecurityInfoDto>.Success(dto);
+    }
+
+    public async Task<Result> CreateAdminUserAsync(CreateAdminUserRequest request, Guid currentUserId, CancellationToken cancellationToken = default)
+    {
+        var currentUser = await _userManager.FindByIdAsync(currentUserId.ToString());
+        var isCurrentSuperAdmin = currentUser != null && await _userManager.IsInRoleAsync(currentUser, "SuperAdmin");
+
+        var roleName = string.Equals(request.Role, "superadmin", StringComparison.OrdinalIgnoreCase) ? "SuperAdmin" : "Admin";
+
+        if (roleName == "SuperAdmin" && !isCurrentSuperAdmin)
+        {
+            return Result.Failure(new Error("Forbidden", "Sadece SuperAdmin yetkisine sahip kullanıcılar yeni SuperAdmin oluşturabilir."));
+        }
+
+        if (await _userManager.FindByEmailAsync(request.Email) != null)
+        {
+            return Result.Failure(new Error("Conflict", "Bu e-posta adresi sistemde zaten kayıtlı."));
+        }
+
+        var names = request.FullName.Trim().Split(' ');
+        var firstName = names.Length > 0 ? names[0] : "";
+        var lastName = names.Length > 1 ? string.Join(" ", names.Skip(1)) : "";
+
+        var user = new ApplicationUser
+        {
+            UserName = request.Email,
+            Email = request.Email,
+            FirstName = firstName,
+            LastName = lastName,
+            PhoneNumber = request.Phone,
+            Status = UserStatus.Active,
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = currentUserId
+        };
+
+        var password = request.GenerateTempPassword ? "Eiskele123!" : "Eiskele123!"; 
+
+        var createResult = await _userManager.CreateAsync(user, password);
+        if (!createResult.Succeeded)
+        {
+            return Result.Failure(new Error("CreateFailed", "Kullanıcı oluşturulamadı. " + string.Join(", ", createResult.Errors.Select(e => e.Description))));
+        }
+
+        if (!await _roleManager.RoleExistsAsync(roleName))
+        {
+            await _roleManager.CreateAsync(new ApplicationRole { Name = roleName });
+        }
+
+        var roleResult = await _userManager.AddToRoleAsync(user, roleName);
+        if (!roleResult.Succeeded)
+        {
+            return Result.Failure(new Error("AssignRoleFailed", "Kullanıcıya rol atanamadı."));
+        }
+
+        await CreateAuditLogAsync("CreateAdmin", "ApplicationUser", user.Id.ToString(), currentUserId, "", roleName, $"Created new {roleName}", cancellationToken);
+
+        return Result.Success();
+    }
+
     private async Task CreateAuditLogAsync(string action, string entityType, string entityId, Guid actorUserId, string oldValue, string newValue, string description, CancellationToken cancellationToken)
     {
         var auditLog = new AuditLog

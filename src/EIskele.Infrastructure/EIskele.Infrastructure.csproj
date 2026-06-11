@@ -5,14 +5,31 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\e-iskele_logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Emails\Templates\**\*.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\EIskele.Application\EIskele.Application.csproj" />
     <ProjectReference Include="..\EIskele.Persistence\EIskele.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.17.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.84.2" />
+    <PackageReference Include="RazorLight" Version="2.3.1" />
   </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
 </Project>

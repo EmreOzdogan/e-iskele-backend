@@ -24,6 +24,9 @@ public static class DependencyInjection
 
         services.AddScoped<EIskele.Application.Common.Settings.ISettingsService, EIskele.Infrastructure.Settings.SettingsService>();
 
+        // Email Infrastructure
+        services.AddSingleton<EIskele.Infrastructure.Emails.Services.IEmailTemplateRenderer, EIskele.Infrastructure.Emails.Services.RazorEmailTemplateRenderer>();
+        services.AddScoped<EIskele.Infrastructure.Emails.Services.IEmailSender, EIskele.Infrastructure.Emails.Services.SmtpEmailSender>();
         // Application Core Services
         services.AddScoped<EIskele.Application.Auth.IAuthService, EIskele.Infrastructure.Services.AuthService>();
         services.AddScoped<EIskele.Application.Captains.ICaptainService, EIskele.Infrastructure.Services.CaptainService>();

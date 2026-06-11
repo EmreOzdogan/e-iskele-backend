@@ -32,6 +32,13 @@ public class AdminUsersController : BaseController
         return HandleResult(result);
     }
 
+    [HttpGet("{id:guid}/security")]
+    public async Task<IActionResult> GetUserSecurityInfo(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _adminUserService.GetUserSecurityInfoAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
     [HttpPut("{id:guid}/status")]
     public async Task<IActionResult> UpdateUserStatus(Guid id, [FromBody] UpdateUserStatusRequest request, CancellationToken cancellationToken)
     {
@@ -47,6 +54,15 @@ public class AdminUsersController : BaseController
         var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var currentUserId = currentUserIdStr != null ? Guid.Parse(currentUserIdStr) : Guid.Empty;
         var result = await _adminUserService.UpdateUserRolesAsync(id, request, currentUserId, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateAdminUser([FromBody] CreateAdminUserRequest request, CancellationToken cancellationToken)
+    {
+        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = currentUserIdStr != null ? Guid.Parse(currentUserIdStr) : Guid.Empty;
+        var result = await _adminUserService.CreateAdminUserAsync(request, currentUserId, cancellationToken);
         return HandleResult(result);
     }
 
