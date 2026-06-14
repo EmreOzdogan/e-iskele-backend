@@ -20,12 +20,14 @@ public class AuthService : IAuthService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IConfiguration _configuration;
+    private readonly EIskele.Application.Common.Settings.ISettingsService _settingsService;
 
-    public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+    public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, EIskele.Application.Common.Settings.ISettingsService settingsService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
+        _settingsService = settingsService;
     }
 
     public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -34,6 +36,27 @@ public class AuthService : IAuthService
         if (existingUser != null)
         {
             return Result<AuthResponse>.Failure("AUTH.EMAIL_EXISTS", "Bu e-posta adresi ile kayıtlı bir kullanıcı zaten var.");
+        }
+
+        var securitySettingsResult = await _settingsService.GetSecuritySettingsAsync(cancellationToken);
+        var securitySettings = securitySettingsResult.IsSuccess ? securitySettingsResult.Value : new EIskele.Application.Common.Settings.SecuritySettingsDto();
+
+        if (request.Password.Length < securitySettings.PasswordMinimumLength)
+        {
+            return Result<AuthResponse>.Failure("AUTH.PASSWORD_TOO_SHORT", $"Şifre en az {securitySettings.PasswordMinimumLength} karakter olmalıdır.");
+        }
+
+        if (securitySettings.RequirePasswordComplexity)
+        {
+            bool hasUpper = request.Password.Any(char.IsUpper);
+            bool hasLower = request.Password.Any(char.IsLower);
+            bool hasDigit = request.Password.Any(char.IsDigit);
+            bool hasSpecial = request.Password.Any(ch => !char.IsLetterOrDigit(ch));
+
+            if (!hasUpper || !hasLower || !hasDigit || !hasSpecial)
+            {
+                return Result<AuthResponse>.Failure("AUTH.PASSWORD_COMPLEXITY", "Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.");
+            }
         }
 
         var user = new ApplicationUser
@@ -67,20 +90,45 @@ public class AuthService : IAuthService
             return Result<AuthResponse>.Failure("AUTH.INVALID_CREDENTIALS", "Geçersiz e-posta veya şifre.");
         }
 
+        var securitySettingsResult = await _settingsService.GetSecuritySettingsAsync(cancellationToken);
+        var securitySettings = securitySettingsResult.IsSuccess ? securitySettingsResult.Value : new EIskele.Application.Common.Settings.SecuritySettingsDto();
+
+        if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
+        {
+            return Result<AuthResponse>.Failure("AUTH.ACCOUNT_LOCKED", "Hesabınız çok fazla başarısız deneme nedeniyle kilitlenmiştir.");
+        }
+
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+        
         if (!result.Succeeded)
         {
+            user.AccessFailedCount++;
+            if (user.AccessFailedCount >= securitySettings.MaxFailedLoginAttempts)
+            {
+                user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(securitySettings.AccountLockoutMinutes);
+                user.AccessFailedCount = 0;
+                await _userManager.UpdateAsync(user);
+                return Result<AuthResponse>.Failure("AUTH.ACCOUNT_LOCKED", "Hesabınız çok fazla başarısız deneme nedeniyle kilitlenmiştir.");
+            }
+            await _userManager.UpdateAsync(user);
             return Result<AuthResponse>.Failure("AUTH.INVALID_CREDENTIALS", "Geçersiz e-posta veya şifre.");
         }
 
+        // Başarılı girişte sayacı ve kilidi sıfırla
+        user.AccessFailedCount = 0;
+        user.LockoutEnd = null;
+        await _userManager.UpdateAsync(user);
+
         var roles = await _userManager.GetRolesAsync(user);
-        var tokenString = GenerateJwtToken(user, roles);
+        int sessionMinutes = securitySettings.AdminSessionMinutes > 0 ? securitySettings.AdminSessionMinutes : _configuration.GetValue<int>("Jwt:AccessTokenMinutes", 60);
+
+        var tokenString = await GenerateJwtTokenAsync(user, roles, sessionMinutes);
 
         var response = new AuthResponse
         {
             AccessToken = tokenString,
             RefreshToken = "not-implemented-yet",
-            ExpiresIn = _configuration.GetValue<long>("Jwt:AccessTokenMinutes") * 60
+            ExpiresIn = sessionMinutes * 60
         };
 
         return Result<AuthResponse>.Success(response);
@@ -91,7 +139,7 @@ public class AuthService : IAuthService
         return Task.FromResult(Result<AuthResponse>.Failure("NOT_IMPLEMENTED", "Metod henüz kodlanmadı."));
     }
 
-    private string GenerateJwtToken(ApplicationUser user, IList<string> roles)
+    private Task<string> GenerateJwtTokenAsync(ApplicationUser user, IList<string> roles, int sessionMinutes)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!));
@@ -111,10 +159,10 @@ public class AuthService : IAuthService
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["AccessTokenMinutes"]!)),
+            expires: DateTime.UtcNow.AddMinutes(sessionMinutes),
             signingCredentials: creds
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
     }
 }

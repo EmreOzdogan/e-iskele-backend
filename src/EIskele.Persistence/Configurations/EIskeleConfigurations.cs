@@ -32,6 +32,7 @@ public class BoatConfiguration : IEntityTypeConfiguration<Boat>
         builder.HasQueryFilter(x => !x.IsDeleted);
         builder.HasOne(x => x.Captain).WithMany(x => x.Boats).HasForeignKey(x => x.CaptainId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Location).WithMany(x => x.Boats).HasForeignKey(x => x.LocationId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Harbor).WithMany(x => x.Boats).HasForeignKey(x => x.HarborId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 

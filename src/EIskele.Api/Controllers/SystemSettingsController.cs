@@ -109,18 +109,14 @@ public class SystemSettingsController : BaseController
     public async Task<IActionResult> SendTestEmail([FromBody] SendTestEmailRequest request, CancellationToken cancellationToken)
     {
         var result = await _settingsService.SendTestEmailAsync(request.Email, request.Settings, cancellationToken);
-        if (result.IsSuccess)
-            return Ok(result);
-        return BadRequest(result);
+        return HandleResult(result);
     }
 
     [HttpGet("notification")]
     public async Task<IActionResult> GetNotificationSettings(CancellationToken cancellationToken)
     {
         var result = await _settingsService.GetNotificationSettingsAsync(cancellationToken);
-        if (result.IsSuccess)
-            return Ok(result);
-        return BadRequest(result);
+        return HandleResult(result);
     }
 
     [HttpPut("notification")]
@@ -133,25 +129,30 @@ public class SystemSettingsController : BaseController
             return Unauthorized();
 
         var result = await _settingsService.UpdateNotificationSettingsAsync(dto, currentUserId, cancellationToken);
-        if (result.IsSuccess)
-            return Ok(result);
-        return BadRequest(result);
+        return HandleResult(result);
+    }
+
+    public class TestNotificationRequest
+    {
+        public string ScenarioKey { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public SmtpEmailSettingsDto Settings { get; set; } = new();
     }
 
     [HttpPost("notification/test")]
-    public IActionResult TestNotification([FromBody] object payload)
+    public async Task<IActionResult> TestNotification([FromBody] TestNotificationRequest request, CancellationToken cancellationToken)
     {
-        // Mock successful test notification for now
-        return Ok(EIskele.Application.Common.Results.Result.Success());
+        var result = await _settingsService.SendTestScenarioEmailAsync(request.ScenarioKey, request.Email, request.Settings, cancellationToken);
+        if (result.IsSuccess)
+            return Ok(new { success = true, message = "Test bildirimi gönderildi." });
+        return BadRequest(new { success = false, message = result.Error.Message });
     }
 
     [HttpGet("security")]
     public async Task<IActionResult> GetSecuritySettings(CancellationToken cancellationToken)
     {
         var result = await _settingsService.GetSecuritySettingsAsync(cancellationToken);
-        if (result.IsSuccess)
-            return Ok(result);
-        return BadRequest(result);
+        return HandleResult(result);
     }
 
     [HttpPut("security")]
@@ -164,9 +165,7 @@ public class SystemSettingsController : BaseController
             return Unauthorized();
 
         var result = await _settingsService.UpdateSecuritySettingsAsync(dto, currentUserId, cancellationToken);
-        if (result.IsSuccess)
-            return Ok(result);
-        return BadRequest(result);
+        return HandleResult(result);
     }
 
     [HttpGet("payment")]

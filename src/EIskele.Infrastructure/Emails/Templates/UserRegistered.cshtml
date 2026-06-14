@@ -1,19 +1,21 @@
-@model EIskele.Infrastructure.Emails.Models.TestEmailModel
+@model EIskele.Infrastructure.Emails.Models.UserRegisteredEmailModel
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #133c70; }
         .header { background-color: #F8F8FF; padding: 30px 20px; text-align: center; }
         .header img { max-width: 120px; height: auto; margin: 0 auto; display: block; }
         .content { padding: 40px 30px; color: #333333; line-height: 1.6; }
-        .content h1 { color: #0b2545; font-size: 24px; margin-top: 0; }
+        .content h1 { color: #0b2545; font-size: 24px; margin-top: 0; text-align: center; }
         .success-box { background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px 20px; margin: 20px 0; border-radius: 4px; color: #2e7d32; font-weight: 500; }
         .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb; }
         .btn { display: inline-block; background-color: #133c70; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; margin-top: 20px; }
+        .center-text { text-align: center; }
     </style>
 </head>
 <body>
@@ -22,19 +24,26 @@
             <img src="cid:e-iskele-logo" alt="@Model.AppName Logo" />
         </div>
         <div class="content">
-            <h1>SMTP Testi Başarılı!</h1>
-            <p>Merhaba,</p>
-            <p>Eğer bu e-postayı okuyabiliyorsanız, @Model.AppName Admin Paneli üzerinden yapılandırdığınız e-posta gönderim ayarları kusursuz bir şekilde çalışıyor demektir.</p>
+            <h1>Aramıza Hoş Geldiniz!</h1>
+            <p>Merhaba @Model.UserName,</p>
+            <p>e-iskele ailesine katıldığınız için teşekkür ederiz. Kaydınız başarıyla oluşturuldu ve hesabınız aktif hale getirildi.</p>
+            
             <div class="success-box">
-                Sistem, müşterilere ve kaptanlara bildirim göndermeye hazır.
+                Platformumuzu kullanarak deniz deneyimlerinizi hemen planlamaya veya yönetmeye başlayabilirsiniz.
             </div>
-            <p>Güvenli bir deniz deneyimi sunma yolunda platformunuzu güvenle kullanabilirsiniz.</p>
-            <a href="@Model.AdminPanelUrl" class="btn" style="color: #ffffff;">Admin Panele Dön</a>
+
+            <div class="center-text">
+                <a href="@Model.ActionUrl" class="btn" style="color: #ffffff;">Hesabıma Giriş Yap</a>
+            </div>
+
+            <p style="margin-top: 30px; font-size: 14px;">
+                Eğer bu işlemi siz gerçekleştirmediyseniz veya bir hata olduğunu düşünüyorsanız, lütfen destek ekibimizle iletişime geçin.
+            </p>
         </div>
         <div class="footer">
-            © @Model.CurrentYear @Model.AppName Tüm Hakları Saklıdır.<br>
-            Bu e-posta sistem tarafından otomatik olarak test amacıyla gönderilmiştir.<br>
-            Lütfen bu e-postayı yanıtlamayınız.
+            © @DateTime.Now.Year @Model.AppName Tüm Hakları Saklıdır.<br>
+            Bu e-posta sistemi kullanıcılara otomatik olarak gönderilmektedir.<br>
+            Lütfen bu e-postaya yanıt vermeyiniz.<br>
         </div>
     </div>
 </body>

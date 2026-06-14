@@ -454,6 +454,249 @@ public class SettingsService : ISettingsService
         }
     }
 
+    public async Task<EIskele.Application.Common.Results.Result> SendTestScenarioEmailAsync(string scenarioKey, string email, SmtpEmailSettingsDto dto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var htmlBody = string.Empty;
+            string subject = "Test Bildirimi";
+
+            if (scenarioKey == "user_registered")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.UserRegisteredEmailModel
+                {
+                    BaseUrl = "https://www.e-iskele.com",
+                    ActionUrl = "https://www.e-iskele.com/login",
+                    UserName = "Test Kullanıcısı"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("UserRegistered", model, cancellationToken);
+                subject = "e-iskele: Hoş Geldiniz";
+            }
+            else if (scenarioKey == "password_reset")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.PasswordResetEmailModel
+                {
+                    UserName = "Test Kullanıcısı",
+                    ActionUrl = "https://www.e-iskele.com/sifre-sifirla?token=test"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("PasswordReset", model, cancellationToken);
+                subject = "e-iskele: Şifre Sıfırlama Talebi";
+            }
+            else if (scenarioKey == "captain_application_received")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.CaptainApplicationReceivedEmailModel
+                {
+                    CaptainName = "Örnek Kaptan",
+                    ApplicationDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"),
+                    SupportUrl = "https://kaptanhub.e-iskele.com/destek"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("CaptainApplicationReceived", model, cancellationToken);
+                subject = "e-iskele: Kaptan Başvurunuz Alındı";
+            }
+            else if (scenarioKey == "captain_application_approved")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.CaptainApplicationResultEmailModel
+                {
+                    CaptainName = "Örnek Kaptan",
+                    SupportUrl = "https://kaptanhub.e-iskele.com/"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("CaptainApplicationApproved", model, cancellationToken);
+                subject = "e-iskele: Kaptan Başvurunuz Onaylandı";
+            }
+            else if (scenarioKey == "captain_application_rejected")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.CaptainApplicationResultEmailModel
+                {
+                    CaptainName = "Örnek Kaptan",
+                    Reason = "Belgeleriniz doğrulanamadı. Lütfen geçerli bir ticari ruhsat yükleyiniz.",
+                    SupportUrl = "https://kaptanhub.e-iskele.com/destek"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("CaptainApplicationRejected", model, cancellationToken);
+                subject = "e-iskele: Kaptan Başvurunuz Reddedildi";
+            }
+            else if (scenarioKey == "captain_application_missing_document")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.CaptainApplicationResultEmailModel
+                {
+                    CaptainName = "Örnek Kaptan",
+                    Reason = "Kimlik fotokopiniz okunaksızdır. Lütfen daha net bir fotoğraf yükleyiniz.",
+                    SupportUrl = "https://kaptanhub.e-iskele.com/belgeler"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("CaptainApplicationMissingDocument", model, cancellationToken);
+                subject = "e-iskele: Eksik Belge Talebi";
+            }
+            else if (scenarioKey == "boat_published")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.BoatStatusEmailModel
+                {
+                    CaptainName = "Örnek Kaptan",
+                    BoatName = "Mavi Rüya",
+                    ActionUrl = "https://kaptanhub.e-iskele.com/tekneler"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("BoatPublished", model, cancellationToken);
+                subject = "e-iskele: Tekneniz Yayına Alındı";
+            }
+            else if (scenarioKey == "boat_rejected")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.BoatStatusEmailModel
+                {
+                    CaptainName = "Örnek Kaptan",
+                    BoatName = "Mavi Rüya",
+                    Reason = "Tekne görselleri kalite standartlarımıza uymamaktadır. Lütfen daha yüksek çözünürlüklü görseller ekleyiniz.",
+                    ActionUrl = "https://kaptanhub.e-iskele.com/tekneler"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("BoatRejected", model, cancellationToken);
+                subject = "e-iskele: Tekne Yayına Alımı Reddedildi";
+            }
+            else if (scenarioKey == "reservation_created_customer")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.ReservationEmailModel
+                {
+                    RecipientName = "Örnek Müşteri",
+                    BoatName = "Mavi Rüya",
+                    PackageName = "Tam Gün Balık Turu",
+                    ReservationDate = DateTime.Now.AddDays(7).ToString("dd.MM.yyyy HH:mm"),
+                    GuestCount = 4,
+                    TotalPrice = 5000.00m,
+                    StatusMessage = "Rezervasyon talebiniz kaptana iletildi. Kaptan onayladığında ödeme adımına geçebileceksiniz.",
+                    ActionUrl = "https://www.e-iskele.com/hesabim/rezervasyonlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("ReservationCreatedCustomer", model, cancellationToken);
+                subject = "e-iskele: Rezervasyon Talebiniz Alındı";
+            }
+            else if (scenarioKey == "reservation_created_captain")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.ReservationEmailModel
+                {
+                    RecipientName = "Örnek Kaptan",
+                    BoatName = "Mavi Rüya",
+                    PackageName = "Tam Gün Balık Turu",
+                    ReservationDate = DateTime.Now.AddDays(7).ToString("dd.MM.yyyy HH:mm"),
+                    GuestCount = 4,
+                    TotalPrice = 5000.00m,
+                    StatusMessage = "Lütfen 24 saat içerisinde talebi onaylayın veya reddedin.",
+                    ActionUrl = "https://kaptanhub.e-iskele.com/rezervasyonlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("ReservationCreatedCaptain", model, cancellationToken);
+                subject = "e-iskele: Yeni Rezervasyon Talebi Var";
+            }
+            else if (scenarioKey == "reservation_approved")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.ReservationEmailModel
+                {
+                    RecipientName = "Örnek Müşteri",
+                    BoatName = "Mavi Rüya",
+                    ReservationDate = DateTime.Now.AddDays(7).ToString("dd.MM.yyyy HH:mm"),
+                    TotalPrice = 5000.00m,
+                    StatusMessage = "Talebiniz kaptan tarafından onaylandı! Lütfen ödemenizi tamamlayarak rezervasyonunuzu kesinleştirin.",
+                    ActionUrl = "https://www.e-iskele.com/hesabim/rezervasyonlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("ReservationApproved", model, cancellationToken);
+                subject = "e-iskele: Rezervasyonunuz Onaylandı";
+            }
+            else if (scenarioKey == "reservation_rejected")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.ReservationEmailModel
+                {
+                    RecipientName = "Örnek Müşteri",
+                    BoatName = "Mavi Rüya",
+                    ReservationDate = DateTime.Now.AddDays(7).ToString("dd.MM.yyyy HH:mm"),
+                    StatusMessage = "Kaptanımız belirttiğiniz tarihlerde teknenin müsait olmadığını bildirmiştir.",
+                    ActionUrl = "https://www.e-iskele.com/turlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("ReservationRejected", model, cancellationToken);
+                subject = "e-iskele: Rezervasyon Talebiniz Onaylanamadı";
+            }
+            else if (scenarioKey == "reservation_cancelled")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.ReservationEmailModel
+                {
+                    RecipientName = "Örnek Kullanıcı",
+                    BoatName = "Mavi Rüya",
+                    ReservationDate = DateTime.Now.AddDays(7).ToString("dd.MM.yyyy HH:mm"),
+                    StatusMessage = "İptal talebiniz işleme alınmış olup iptal politikasına göre süreç başlatılmıştır.",
+                    ActionUrl = "https://www.e-iskele.com/hesabim/rezervasyonlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("ReservationCancelled", model, cancellationToken);
+                subject = "e-iskele: Rezervasyonunuz İptal Edildi";
+            }
+            else if (scenarioKey == "reservation_reminder")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.ReservationEmailModel
+                {
+                    RecipientName = "Örnek Müşteri",
+                    BoatName = "Mavi Rüya",
+                    PackageName = "Tam Gün Balık Turu",
+                    ReservationDate = DateTime.Now.AddDays(1).ToString("dd.MM.yyyy HH:mm"),
+                    StatusMessage = "Harika bir deniz deneyimi yaşamanız için kaptanımız sizi bekliyor olacak.",
+                    ActionUrl = "https://www.e-iskele.com/hesabim/rezervasyonlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("ReservationReminder", model, cancellationToken);
+                subject = "e-iskele: Turunuz Yaklaşıyor!";
+            }
+            else if (scenarioKey == "payment_success")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.PaymentEmailModel
+                {
+                    CustomerName = "Örnek Müşteri",
+                    ReservationId = "RES-98765432",
+                    BoatName = "Mavi Rüya",
+                    Amount = 5000.00m,
+                    ActionUrl = "https://www.e-iskele.com/hesabim/rezervasyonlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("PaymentSuccess", model, cancellationToken);
+                subject = "e-iskele: Ödemeniz Başarıyla Alındı";
+            }
+            else if (scenarioKey == "payment_failed")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.PaymentEmailModel
+                {
+                    CustomerName = "Örnek Müşteri",
+                    ReservationId = "RES-98765432",
+                    BoatName = "Mavi Rüya",
+                    Amount = 5000.00m,
+                    ActionUrl = "https://www.e-iskele.com/hesabim/rezervasyonlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("PaymentFailed", model, cancellationToken);
+                subject = "e-iskele: Ödeme Başarısız Oldu";
+            }
+            else if (scenarioKey == "review_request")
+            {
+                var model = new EIskele.Infrastructure.Emails.Models.ReviewRequestEmailModel
+                {
+                    CustomerName = "Örnek Müşteri",
+                    BoatName = "Mavi Rüya",
+                    TourDate = DateTime.Now.AddDays(-1).ToString("dd.MM.yyyy"),
+                    ActionUrl = "https://www.e-iskele.com/hesabim/yorumlar"
+                };
+                htmlBody = await _emailTemplateRenderer.RenderAsync("ReviewRequest", model, cancellationToken);
+                subject = "e-iskele: Turunuz Nasıldı?";
+            }
+            else
+            {
+                return EIskele.Application.Common.Results.Result.Failure("ScenarioNotReady", "Bu senaryo için test şablonu henüz hazır değil.");
+            }
+
+            var assembly = typeof(SettingsService).Assembly;
+            using var logoStream = assembly.GetManifestResourceStream("EIskele.Infrastructure.Resources.e-iskele_logo.png");
+            byte[]? logoBytes = null;
+            if (logoStream != null)
+            {
+                using var ms = new System.IO.MemoryStream();
+                await logoStream.CopyToAsync(ms, cancellationToken);
+                logoBytes = ms.ToArray();
+            }
+
+            await _emailSender.SendAsync(email, subject, htmlBody, dto, logoBytes, cancellationToken);
+
+            return EIskele.Application.Common.Results.Result.Success();
+        }
+        catch (Exception ex)
+        {
+            return EIskele.Application.Common.Results.Result.Failure("SmtpSendError", ex.Message);
+        }
+    }
+
     public async Task<EIskele.Application.Common.Results.Result<NotificationSettingsDto>> GetNotificationSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);

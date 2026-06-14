@@ -9,4 +9,5 @@ public abstract class BaseEmailTemplateModel
     public string LogoUrl { get; set; } = string.Empty;
     public string SupportEmail { get; set; } = string.Empty;
     public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.UtcNow;
+    public int CurrentYear { get; set; } = DateTime.UtcNow.Year;
 }
