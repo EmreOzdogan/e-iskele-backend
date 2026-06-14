@@ -1,0 +1,36 @@
+# Build artifacts
+**/bin/
+**/obj/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# Git
+.git
+.gitignore
+.github
+
+# Docker files (no need in context)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Sensitive config — secrets should come from environment variables, not files
+**/appsettings.Development.json
+**/appsettings.Local.json
+
+# Log files
+**/*.log
+**/logs/
+
+# Test projects (don't need them in runtime image)
+**/*.Tests/
+**/*.Test/
+**/*.IntegrationTests/
