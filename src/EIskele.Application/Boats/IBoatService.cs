@@ -19,4 +19,21 @@ public interface IBoatService
         string? sortBy, string? sortDirection, CancellationToken cancellationToken = default);
 
     Task<Result<AdminBoatsSummaryDto>> GetAdminBoatsSummaryAsync(CancellationToken cancellationToken = default);
+
+    Task<Result<BoatDetailDto>> GetAdminBoatDetailAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result<List<BoatImageDto>>> GetAdminBoatImagesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result<List<BoatDocumentDto>>> GetAdminBoatDocumentsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result<List<BoatFeatureDto>>> GetAdminBoatFeaturesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result<List<BoatPackageSummaryDto>>> GetAdminBoatPackagesAsync(Guid id, CancellationToken cancellationToken = default);
+    
+    Task<Result> RejectBoatAsync(Guid id, string reason, CancellationToken cancellationToken = default);
+    Task<Result> RequestBoatRevisionAsync(Guid id, List<string> fields, string note, CancellationToken cancellationToken = default);
+    Task<Result> DeactivateBoatAsync(Guid id, string reason, CancellationToken cancellationToken = default);
+    Task<Result> SuspendBoatAsync(Guid id, string reason, CancellationToken cancellationToken = default);
+    Task<Result> ReactivateBoatAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Result> ApproveBoatImageAsync(Guid imageId, CancellationToken cancellationToken = default);
+    Task<Result> RejectBoatImageAsync(Guid imageId, string reason, CancellationToken cancellationToken = default);
+    Task<Result> ApproveBoatDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
+    Task<Result> RejectBoatDocumentAsync(Guid documentId, string reason, CancellationToken cancellationToken = default);
 }

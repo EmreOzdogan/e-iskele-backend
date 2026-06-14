@@ -47,4 +47,113 @@ public class AdminBoatsController : BaseController
         var result = await _boatService.GetAdminBoatsSummaryAsync(cancellationToken);
         return HandleResult(result);
     }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetBoatDetail(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.GetAdminBoatDetailAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpGet("{id}/images")]
+    public async Task<IActionResult> GetBoatImages(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.GetAdminBoatImagesAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpGet("{id}/documents")]
+    public async Task<IActionResult> GetBoatDocuments(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.GetAdminBoatDocumentsAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpGet("{id}/features")]
+    public async Task<IActionResult> GetBoatFeatures(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.GetAdminBoatFeaturesAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpGet("{id}/packages")]
+    public async Task<IActionResult> GetBoatPackages(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.GetAdminBoatPackagesAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> ApproveBoat(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.ApproveBoatAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/reject")]
+    public async Task<IActionResult> RejectBoat(Guid id, [FromBody] RejectRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.RejectBoatAsync(id, request.Reason, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/request-revision")]
+    public async Task<IActionResult> RequestRevision(Guid id, [FromBody] RevisionRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.RequestBoatRevisionAsync(id, request.Fields, request.Note, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/deactivate")]
+    public async Task<IActionResult> DeactivateBoat(Guid id, [FromBody] ReasonRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.DeactivateBoatAsync(id, request.Reason, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/suspend")]
+    public async Task<IActionResult> SuspendBoat(Guid id, [FromBody] ReasonRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.SuspendBoatAsync(id, request.Reason, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/reactivate")]
+    public async Task<IActionResult> ReactivateBoat(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.ReactivateBoatAsync(id, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/images/{imageId}/approve")]
+    public async Task<IActionResult> ApproveBoatImage(Guid id, Guid imageId, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.ApproveBoatImageAsync(imageId, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/images/{imageId}/reject")]
+    public async Task<IActionResult> RejectBoatImage(Guid id, Guid imageId, [FromBody] ReasonRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.RejectBoatImageAsync(imageId, request.Reason, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/documents/{documentId}/approve")]
+    public async Task<IActionResult> ApproveBoatDocument(Guid id, Guid documentId, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.ApproveBoatDocumentAsync(documentId, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("{id}/documents/{documentId}/reject")]
+    public async Task<IActionResult> RejectBoatDocument(Guid id, Guid documentId, [FromBody] ReasonRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.RejectBoatDocumentAsync(documentId, request.Reason, cancellationToken);
+        return HandleResult(result);
+    }
 }
+
+public class RejectRequest { public string Reason { get; set; } = string.Empty; }
+public class ReasonRequest { public string Reason { get; set; } = string.Empty; }
+public class RevisionRequest { public System.Collections.Generic.List<string> Fields { get; set; } = new(); public string Note { get; set; } = string.Empty; }

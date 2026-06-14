@@ -12,7 +12,7 @@ using System.Collections.Generic;
 
 namespace EIskele.Infrastructure.Services;
 
-public class BoatService : IBoatService
+public partial class BoatService : IBoatService
 {
     private readonly EIskeleDbContext _dbContext;
 

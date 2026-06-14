@@ -13,9 +13,11 @@ public class EIskeleDbContext : IdentityDbContext<ApplicationUser, ApplicationRo
 
     public DbSet<Captain> Captains => Set<Captain>();
     public DbSet<Boat> Boats => Set<Boat>();
+    public DbSet<BoatFeature> BoatFeatures => Set<BoatFeature>();
     public DbSet<Location> Locations => Set<Location>();
     public DbSet<Harbor> Harbors => Set<Harbor>();
     public DbSet<TourPackage> TourPackages => Set<TourPackage>();
+    public DbSet<PackageInclude> PackageIncludes => Set<PackageInclude>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<AvailabilitySlot> AvailabilitySlots => Set<AvailabilitySlot>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

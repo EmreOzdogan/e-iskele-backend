@@ -4,6 +4,7 @@ using EIskele.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EIskele.Persistence.Migrations
 {
     [DbContext(typeof(EIskeleDbContext))]
-    partial class EIskeleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260614204148_AddBoatFeatures")]
+    partial class AddBoatFeatures
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -779,51 +782,6 @@ namespace EIskele.Persistence.Migrations
                     b.ToTable("NotificationTemplates");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.PackageInclude", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsIncluded")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<Guid>("TourPackageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TourPackageId");
-
-                    b.ToTable("PackageIncludes");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1275,29 +1233,11 @@ namespace EIskele.Persistence.Migrations
                     b.Property<Guid>("BoatId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("CancellationPolicyType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("CaptainCancellationNote")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
@@ -1309,19 +1249,7 @@ namespace EIskele.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("DurationHours")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan?>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("FreeCancellationHours")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsChildFriendly")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
@@ -1337,41 +1265,14 @@ namespace EIskele.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("PrepaymentPercentage")
-                        .HasColumnType("decimal(5,2)");
-
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("RefundPolicyNote")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("ServiceFee")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<TimeSpan?>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TimeLabel")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TourType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("WeatherPostponeNote")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -1598,17 +1499,6 @@ namespace EIskele.Persistence.Migrations
                     b.Navigation("ParentLocation");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.PackageInclude", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.TourPackage", "TourPackage")
-                        .WithMany("Includes")
-                        .HasForeignKey("TourPackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TourPackage");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("EIskele.Domain.Entities.Reservation", "Reservation")
@@ -1822,8 +1712,6 @@ namespace EIskele.Persistence.Migrations
 
             modelBuilder.Entity("EIskele.Domain.Entities.TourPackage", b =>
                 {
-                    b.Navigation("Includes");
-
                     b.Navigation("Reservations");
                 });
 #pragma warning restore 612, 618

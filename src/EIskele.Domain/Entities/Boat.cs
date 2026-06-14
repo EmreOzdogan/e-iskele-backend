@@ -21,4 +21,5 @@ public class Boat : SoftDeletableEntity
     public ICollection<TourPackage> TourPackages { get; set; } = new List<TourPackage>();
     public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     public ICollection<AvailabilitySlot> AvailabilitySlots { get; set; } = new List<AvailabilitySlot>();
+    public ICollection<BoatFeature> BoatFeatures { get; set; } = new List<BoatFeature>();
 }
