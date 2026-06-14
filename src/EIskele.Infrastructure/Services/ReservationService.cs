@@ -12,13 +12,20 @@ using System.Linq;
 
 namespace EIskele.Infrastructure.Services;
 
-public class ReservationService : IReservationService
+public partial class ReservationService : IReservationService
 {
     private readonly EIskeleDbContext _dbContext;
+    private readonly EIskele.Application.Common.Settings.ISettingsService _settingsService;
+    private readonly EIskele.Infrastructure.Emails.Services.IEmailSender _emailSender;
 
-    public ReservationService(EIskeleDbContext dbContext)
+    public ReservationService(
+        EIskeleDbContext dbContext,
+        EIskele.Application.Common.Settings.ISettingsService settingsService,
+        EIskele.Infrastructure.Emails.Services.IEmailSender emailSender)
     {
         _dbContext = dbContext;
+        _settingsService = settingsService;
+        _emailSender = emailSender;
     }
 
     public async Task<Result<ReservationResponse>> CreateReservationAsync(CreateReservationRequest request, CancellationToken cancellationToken = default)

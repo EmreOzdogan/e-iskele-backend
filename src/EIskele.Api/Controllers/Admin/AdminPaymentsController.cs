@@ -10,7 +10,7 @@ namespace EIskele.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/payments")]
 [Authorize(Roles = "Admin,SuperAdmin")] // Assume role check is handled
-public class AdminPaymentsController : ControllerBase
+public class AdminPaymentsController : BaseController
 {
     private readonly IPaymentService _paymentService;
 
@@ -23,47 +23,35 @@ public class AdminPaymentsController : ControllerBase
     public async Task<IActionResult> GetSummaryMetrics()
     {
         var result = await _paymentService.GetAdminPaymentsSummaryAsync();
-        return Ok(result);
+        return HandleResult(result);
     }
 
     [HttpGet]
     public async Task<IActionResult> GetList([FromQuery] GetAdminPaymentsQuery query)
     {
         var result = await _paymentService.GetAdminPaymentsAsync(query);
-        return Ok(result);
+        return HandleResult(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetDetail(Guid id)
     {
         var result = await _paymentService.GetAdminPaymentDetailAsync(id);
-        if (!result.IsSuccess)
-        {
-            return NotFound(result);
-        }
-        return Ok(result);
+        return HandleResult(result);
     }
 
     [HttpPost("{id}/refund")]
     public async Task<IActionResult> ProcessRefund(Guid id, [FromBody] RefundRequestDto request)
     {
         var result = await _paymentService.ProcessRefundRequestAsync(id, request.Action, request.Reason);
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        return Ok(result);
+        return HandleResult(result);
     }
 
     [HttpPatch("{id}/payout-status")]
     public async Task<IActionResult> UpdatePayoutStatus(Guid id, [FromBody] PayoutStatusUpdateDto request)
     {
         var result = await _paymentService.UpdatePayoutStatusAsync(id, request.Status, request.Reason);
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        return Ok(result);
+        return HandleResult(result);
     }
 }
 

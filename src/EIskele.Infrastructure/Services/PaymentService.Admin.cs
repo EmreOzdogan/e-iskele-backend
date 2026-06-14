@@ -16,12 +16,15 @@ public partial class PaymentService
         var paymentsQuery = _context.Payments.AsNoTracking();
 
         var totalTransactions = await paymentsQuery.CountAsync(cancellationToken);
+        var today = DateTime.UtcNow.Date;
+        var startOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+
         var todayCollections = await paymentsQuery
-            .Where(p => p.Status == PaymentStatus.Paid && p.PaidAt >= DateTime.UtcNow.Date)
+            .Where(p => p.Status == PaymentStatus.Paid && p.PaidAt >= today)
             .SumAsync(p => p.Amount, cancellationToken);
             
         var monthlyRevenue = await paymentsQuery
-            .Where(p => p.Status == PaymentStatus.Paid && p.PaidAt >= new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1))
+            .Where(p => p.Status == PaymentStatus.Paid && p.PaidAt >= startOfMonth)
             .SumAsync(p => p.Amount, cancellationToken);
 
         var platformCommission = await paymentsQuery
@@ -42,6 +45,21 @@ public partial class PaymentService
         var pendingRefunds = await paymentsQuery
             .CountAsync(p => p.RefundStatus == RefundStatus.Pending, cancellationToken);
 
+        var paidPayments = await paymentsQuery
+            .CountAsync(p => p.Status == PaymentStatus.Paid, cancellationToken);
+
+        var failedPayments = await paymentsQuery
+            .CountAsync(p => p.Status == PaymentStatus.Failed, cancellationToken);
+
+        var refundedPayments = await paymentsQuery
+            .CountAsync(p => p.RefundStatus == RefundStatus.Refunded, cancellationToken);
+
+        var partiallyRefundedPayments = await paymentsQuery
+            .CountAsync(p => p.RefundStatus == RefundStatus.PartiallyRefunded, cancellationToken);
+
+        var payoutPendingPayments = await paymentsQuery
+            .CountAsync(p => p.PayoutStatus == PayoutStatus.Pending, cancellationToken);
+
         var result = new AdminPaymentSummaryMetricsDto
         {
             TotalTransactions = totalTransactions,
@@ -51,7 +69,12 @@ public partial class PaymentService
             ServiceFee = serviceFee,
             CaptainPayouts = captainPayouts,
             PendingPayments = pendingPayments,
-            PendingRefunds = pendingRefunds
+            PendingRefunds = pendingRefunds,
+            PaidPayments = paidPayments,
+            FailedPayments = failedPayments,
+            RefundedPayments = refundedPayments,
+            PartiallyRefundedPayments = partiallyRefundedPayments,
+            PayoutPendingPayments = payoutPendingPayments
         };
 
         return Result<AdminPaymentSummaryMetricsDto>.Success(result);
