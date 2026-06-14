@@ -6,6 +6,9 @@ using EIskele.Application.Common.Results;
 using EIskele.Domain.Entities;
 using EIskele.Domain.Enums;
 using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace EIskele.Infrastructure.Services;
 
@@ -119,6 +122,106 @@ public class BoatService : IBoatService
         return Result<TourPackageResponse>.Success(new TourPackageResponse
         {
             Id = package.Id
+        });
+    }
+
+    public async Task<Result<PagedResult<AdminBoatListItemDto>>> GetAdminBoatsAsync(
+        string? search, string? boatStatus, string? documentStatus, string? publishStatus,
+        string? captainStatus, Guid? locationId, string? boatType,
+        int? minCapacity, int? maxCapacity, int page, int pageSize,
+        string? sortBy, string? sortDirection, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.Boats
+            .Include(b => b.Captain)
+                .ThenInclude(c => c.User)
+            .Include(b => b.Location)
+            .Include(b => b.Harbor)
+            .Include(b => b.TourPackages)
+            .AsQueryable();
+
+        // Filters
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(b => b.Name.Contains(search) || b.Slug.Contains(search));
+        }
+
+        if (!string.IsNullOrWhiteSpace(boatStatus) && boatStatus != "all")
+        {
+            if (Enum.TryParse<BoatStatus>(boatStatus, true, out var statusEnum))
+            {
+                query = query.Where(b => b.Status == statusEnum);
+            }
+        }
+
+        if (locationId.HasValue)
+        {
+            query = query.Where(b => b.LocationId == locationId.Value);
+        }
+
+        if (minCapacity.HasValue)
+        {
+            query = query.Where(b => b.Capacity >= minCapacity.Value);
+        }
+
+        if (maxCapacity.HasValue)
+        {
+            query = query.Where(b => b.Capacity <= maxCapacity.Value);
+        }
+
+        // Sorting
+        query = sortDirection?.ToLower() == "asc" 
+            ? query.OrderBy(b => b.CreatedAt) 
+            : query.OrderByDescending(b => b.CreatedAt);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var boats = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var items = boats.Select(b => new AdminBoatListItemDto
+        {
+            Id = b.Id,
+            BoatNo = "TR-" + b.Id.ToString().Substring(0, 6).ToUpper(), // mock boat no
+            BoatName = b.Name,
+            BoatType = "Motoryat", // Mock for now if missing in entity
+            CaptainId = b.CaptainId,
+            CaptainName = b.Captain?.User != null ? $"{b.Captain.User.FirstName} {b.Captain.User.LastName}" : "Bilinmiyor",
+            Location = b.Location.Name,
+            Harbor = b.Harbor?.Name,
+            Capacity = b.Capacity,
+            TotalPackageCount = b.TourPackages.Count,
+            ActivePackageCount = b.TourPackages.Count(p => p.IsActive),
+            ReviewStatus = b.Status.ToString(),
+            PublishStatus = b.Status == BoatStatus.Published ? "published" : "notPublished",
+            DocumentStatus = "completed",
+            UpdatedAt = b.UpdatedAt
+        }).ToList();
+
+        var pagedResult = new PagedResult<AdminBoatListItemDto>(items, totalCount, page, pageSize);
+        return Result<PagedResult<AdminBoatListItemDto>>.Success(pagedResult);
+    }
+
+    public async Task<Result<AdminBoatsSummaryDto>> GetAdminBoatsSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var total = await _dbContext.Boats.CountAsync(cancellationToken);
+        var published = await _dbContext.Boats.CountAsync(b => b.Status == BoatStatus.Published, cancellationToken);
+        var pending = await _dbContext.Boats.CountAsync(b => b.Status == BoatStatus.UnderReview, cancellationToken);
+        var rejected = await _dbContext.Boats.CountAsync(b => b.Status == BoatStatus.Rejected, cancellationToken);
+        var passive = await _dbContext.Boats.CountAsync(b => b.Status == BoatStatus.Passive, cancellationToken);
+        var suspended = await _dbContext.Boats.CountAsync(b => b.Status == BoatStatus.Suspended, cancellationToken);
+
+        return Result<AdminBoatsSummaryDto>.Success(new AdminBoatsSummaryDto
+        {
+            TotalBoats = total,
+            PublishedBoats = published,
+            PendingReviewBoats = pending,
+            RejectedBoats = rejected,
+            PassiveBoats = passive,
+            SuspendedBoats = suspended,
+            MissingDocumentBoats = 0,
+            RevisionRequestedBoats = 0
         });
     }
 }
