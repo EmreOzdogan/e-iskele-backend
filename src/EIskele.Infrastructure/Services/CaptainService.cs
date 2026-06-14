@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EIskele.Infrastructure.Services;
 
-public class CaptainService : ICaptainService
+public partial class CaptainService : ICaptainService
 {
     private readonly EIskeleDbContext _dbContext;
 
