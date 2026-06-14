@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<EIskele.Application.Common.Locations.ILocationService, EIskele.Infrastructure.Locations.LocationService>();
         services.AddScoped<EIskele.Application.Packages.ITourPackageService, EIskele.Infrastructure.Services.TourPackageService>();
         services.AddScoped<EIskele.Application.Payments.IPaymentService, EIskele.Infrastructure.Services.PaymentService>();
+        services.AddScoped<EIskele.Application.Dashboard.IDashboardService, EIskele.Infrastructure.Services.DashboardService>();
 
         return services;
     }
