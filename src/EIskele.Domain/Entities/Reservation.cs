@@ -14,6 +14,7 @@ public class Reservation : BaseEntity
     public int GuestCount { get; set; }
     
     // Snapshot of price at the time of booking
+    public string ReservationNo { get; set; } = string.Empty;
     public decimal TotalPrice { get; set; }
     public string PackageNameSnapshot { get; set; } = string.Empty;
     
