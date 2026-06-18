@@ -50,6 +50,7 @@ RUN mkdir -p /app/uploads && chown appuser:appgroup /app/uploads
 USER appuser
 
 # ASP.NET Core listens on port 8080 by default in .NET 8+
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
 # Health check — Dokploy / container orchestrators can use this
