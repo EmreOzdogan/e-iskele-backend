@@ -44,5 +44,26 @@ public static class EIskeleDbContextSeed
                 await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
             }
         }
+
+        var captainEmail = "kaptan@e-iskele.com";
+        if (await userManager.FindByEmailAsync(captainEmail) == null)
+        {
+            var captainUser = new ApplicationUser
+            {
+                UserName = captainEmail,
+                Email = captainEmail,
+                FirstName = "Test",
+                LastName = "Kaptan",
+                EmailConfirmed = true,
+                Status = UserStatus.Active,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await userManager.CreateAsync(captainUser, "Kaptan123!");
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(captainUser, "Captain");
+            }
+        }
     }
 }

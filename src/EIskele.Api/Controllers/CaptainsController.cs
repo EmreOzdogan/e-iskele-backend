@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using EIskele.Application.Captains;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EIskele.Api.Controllers;
 
@@ -18,9 +19,16 @@ public class CaptainsController : BaseController
     }
 
     [HttpPost("apply")]
+    [Authorize]
     public async Task<IActionResult> Apply([FromBody] CaptainApplicationRequest request, CancellationToken cancellationToken)
     {
-        var result = await _captainService.ApplyAsync(request, cancellationToken);
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized(EIskele.Shared.Responses.ApiResponse.CreateFailure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
+        }
+
+        var result = await _captainService.ApplyAsync(userId, request, cancellationToken);
         return HandleResult(result);
     }
 
