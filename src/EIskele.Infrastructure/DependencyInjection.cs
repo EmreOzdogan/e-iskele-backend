@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<EIskele.Application.Reviews.ICaptainReviewService, EIskele.Infrastructure.Services.CaptainReviewService>();
         services.AddScoped<EIskele.Application.Earnings.ICaptainEarningService, EIskele.Infrastructure.Services.CaptainEarningService>();
         services.AddScoped<EIskele.Application.Settings.ICaptainSettingsService, EIskele.Infrastructure.Services.CaptainSettingsService>();
+        services.AddScoped<EIskele.Application.Dashboard.ICaptainDashboardService, EIskele.Infrastructure.Services.CaptainDashboardService>();
 
         return services;
     }
