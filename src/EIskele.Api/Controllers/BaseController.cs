@@ -8,6 +8,15 @@ namespace EIskele.Api.Controllers;
 [Route("api/[controller]")]
 public abstract class BaseController : ControllerBase
 {
+    protected Guid UserId 
+    {
+        get
+        {
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(userIdString, out var userId) ? userId : Guid.Empty;
+        }
+    }
+
     protected IActionResult HandleResult(Result result)
     {
         if (result.IsSuccess)

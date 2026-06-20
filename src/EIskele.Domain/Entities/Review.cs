@@ -16,10 +16,16 @@ public class Review : BaseEntity, IAuditableEntity, ISoftDeletableEntity
     public Guid TourPackageId { get; set; }
     public TourPackage TourPackage { get; set; } = null!;
     
+    public Guid ReservationId { get; set; }
+    public Reservation Reservation { get; set; } = null!;
+    
     public int Rating { get; set; }
     public string Comment { get; set; } = string.Empty;
     
     public ReviewStatus Status { get; set; } = ReviewStatus.InReview;
+    
+    public ReviewReply? Reply { get; set; }
+    public ICollection<ReviewReport> Reports { get; set; } = new List<ReviewReport>();
     
     // IAuditableEntity
     public new DateTime CreatedAt { get; set; }

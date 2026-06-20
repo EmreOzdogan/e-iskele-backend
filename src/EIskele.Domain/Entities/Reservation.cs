@@ -19,6 +19,7 @@ public class Reservation : BaseEntity
     public string PackageNameSnapshot { get; set; } = string.Empty;
     
     public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
+    public string? CaptainNote { get; set; }
 
     // Navigation
     public ApplicationUser Customer { get; set; } = null!;

@@ -4,6 +4,7 @@ using EIskele.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EIskele.Persistence.Migrations
 {
     [DbContext(typeof(EIskeleDbContext))]
-    partial class EIskeleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260619215828_AddReviewReplyAndReport")]
+    partial class AddReviewReplyAndReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1004,60 +1007,6 @@ namespace EIskele.Persistence.Migrations
                     b.ToTable("Payments");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.Payout", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid>("CaptainId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IbanMasked")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("PaidDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PayoutNo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RelatedReservationCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ScheduledDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CaptainId");
-
-                    b.ToTable("Payouts");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.Permission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1646,52 +1595,6 @@ namespace EIskele.Persistence.Migrations
                     b.ToTable("TourPackages");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.UserActiveSession", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Device")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsCurrent")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("LastAccess")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserActiveSessions");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.UserAdminNote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1725,134 +1628,6 @@ namespace EIskele.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserAdminNotes");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserLegalAgreement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AgreementName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Version")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserLegalAgreements");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserNotificationPreference", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Email")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("InApp")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Sms")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Whatsapp")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserNotificationPreferences");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserSecurityEvent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserSecurityEvents");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -2077,17 +1852,6 @@ namespace EIskele.Persistence.Migrations
                     b.Navigation("Reservation");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.Payout", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.Captain", "Captain")
-                        .WithMany()
-                        .HasForeignKey("CaptainId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Captain");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.Reservation", b =>
                 {
                     b.HasOne("EIskele.Domain.Entities.Boat", "Boat")
@@ -2213,54 +1977,10 @@ namespace EIskele.Persistence.Migrations
                     b.Navigation("Boat");
                 });
 
-            modelBuilder.Entity("EIskele.Domain.Entities.UserActiveSession", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("ActiveSessions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("EIskele.Domain.Entities.UserAdminNote", b =>
                 {
                     b.HasOne("EIskele.Domain.Entities.ApplicationUser", "User")
                         .WithMany("AdminNotes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserLegalAgreement", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("LegalAgreements")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserNotificationPreference", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("NotificationPreferences")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("EIskele.Domain.Entities.UserSecurityEvent", b =>
-                {
-                    b.HasOne("EIskele.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("SecurityEvents")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2321,21 +2041,13 @@ namespace EIskele.Persistence.Migrations
 
             modelBuilder.Entity("EIskele.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.Navigation("ActiveSessions");
-
                     b.Navigation("AdminNotes");
 
                     b.Navigation("Captain");
 
-                    b.Navigation("LegalAgreements");
-
-                    b.Navigation("NotificationPreferences");
-
                     b.Navigation("Reservations");
 
                     b.Navigation("Reviews");
-
-                    b.Navigation("SecurityEvents");
 
                     b.Navigation("SupportTickets");
                 });

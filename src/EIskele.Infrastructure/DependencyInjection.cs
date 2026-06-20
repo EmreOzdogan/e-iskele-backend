@@ -33,11 +33,16 @@ public static class DependencyInjection
         services.AddScoped<EIskele.Application.Boats.IBoatService, EIskele.Infrastructure.Services.BoatService>();
         services.AddScoped<EIskele.Application.Reservations.IReservationService, EIskele.Infrastructure.Services.ReservationService>();
         services.AddScoped<EIskele.Application.Availability.IAvailabilityService, EIskele.Infrastructure.Services.AvailabilityService>();
+        services.AddScoped<EIskele.Application.Availability.ICaptainCalendarService, EIskele.Infrastructure.Services.CaptainCalendarService>();
         services.AddScoped<EIskele.Application.Users.Services.IAdminUserService, EIskele.Infrastructure.Services.AdminUserService>();
         services.AddScoped<EIskele.Application.Common.Locations.ILocationService, EIskele.Infrastructure.Locations.LocationService>();
         services.AddScoped<EIskele.Application.Packages.ITourPackageService, EIskele.Infrastructure.Services.TourPackageService>();
         services.AddScoped<EIskele.Application.Payments.IPaymentService, EIskele.Infrastructure.Services.PaymentService>();
         services.AddScoped<EIskele.Application.Dashboard.IDashboardService, EIskele.Infrastructure.Services.DashboardService>();
+        services.AddScoped<EIskele.Application.Reservations.ICaptainReservationService, EIskele.Infrastructure.Services.CaptainReservationService>();
+        services.AddScoped<EIskele.Application.Reviews.ICaptainReviewService, EIskele.Infrastructure.Services.CaptainReviewService>();
+        services.AddScoped<EIskele.Application.Earnings.ICaptainEarningService, EIskele.Infrastructure.Services.CaptainEarningService>();
+        services.AddScoped<EIskele.Application.Settings.ICaptainSettingsService, EIskele.Infrastructure.Services.CaptainSettingsService>();
 
         return services;
     }

@@ -49,4 +49,36 @@ public class BoatsController : BaseController
         var result = await _boatService.AddTourPackageAsync(request, cancellationToken);
         return HandleResult(result);
     }
+
+    [HttpGet("my-boats")]
+    [Authorize(Roles = "Captain")]
+    public async Task<IActionResult> GetMyBoats(CancellationToken cancellationToken)
+    {
+        var result = await _boatService.GetMyBoatsAsync(UserId, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Captain")]
+    public async Task<IActionResult> GetMyBoatDetail(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.GetMyBoatDetailAsync(id, UserId, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Captain")]
+    public async Task<IActionResult> UpdateMyBoat(Guid id, [FromBody] UpdateCaptainBoatRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.UpdateMyBoatAsync(id, UserId, request, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("my-boats")]
+    [Authorize(Roles = "Captain")]
+    public async Task<IActionResult> CreateMyBoat([FromBody] CreateCaptainBoatRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.CreateMyBoatAsync(UserId, request, cancellationToken);
+        return HandleResult(result);
+    }
 }

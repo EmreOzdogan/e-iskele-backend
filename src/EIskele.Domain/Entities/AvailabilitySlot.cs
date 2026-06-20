@@ -12,4 +12,9 @@ public class AvailabilitySlot : BaseEntity
 
     // Navigation
     public Boat Boat { get; set; } = null!;
+    public Guid? TourPackageId { get; set; }
+    public TourPackage? TourPackage { get; set; }
+    
+    // Override properties
+    public int? Capacity { get; set; }
 }

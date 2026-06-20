@@ -42,4 +42,8 @@ public class ApplicationUser : IdentityUser<Guid>, ISoftDeletableEntity
     public ICollection<UserAdminNote> AdminNotes { get; set; } = new List<UserAdminNote>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<SupportTicket> SupportTickets { get; set; } = new List<SupportTicket>();
+    public ICollection<UserNotificationPreference> NotificationPreferences { get; set; } = new List<UserNotificationPreference>();
+    public ICollection<UserLegalAgreement> LegalAgreements { get; set; } = new List<UserLegalAgreement>();
+    public ICollection<UserSecurityEvent> SecurityEvents { get; set; } = new List<UserSecurityEvent>();
+    public ICollection<UserActiveSession> ActiveSessions { get; set; } = new List<UserActiveSession>();
 }

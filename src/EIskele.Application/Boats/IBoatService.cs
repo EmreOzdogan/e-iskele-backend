@@ -12,6 +12,13 @@ public interface IBoatService
     Task<Result> ApproveBoatAsync(Guid boatId, CancellationToken cancellationToken = default);
     Task<Result<TourPackageResponse>> AddTourPackageAsync(CreateTourPackageRequest request, CancellationToken cancellationToken = default);
 
+    // Captain methods
+    Task<Result<List<CaptainBoatListItemDto>>> GetMyBoatsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<Result<CaptainBoatDetailDto>> GetMyBoatDetailAsync(Guid boatId, Guid userId, CancellationToken cancellationToken = default);
+    Task<Result> UpdateMyBoatAsync(Guid boatId, Guid userId, UpdateCaptainBoatRequest request, CancellationToken cancellationToken = default);
+    Task<Result<BoatResponse>> CreateMyBoatAsync(Guid userId, CreateCaptainBoatRequest request, CancellationToken cancellationToken = default);
+
+
     Task<Result<PagedResult<AdminBoatListItemDto>>> GetAdminBoatsAsync(
         string? search, string? boatStatus, string? documentStatus, string? publishStatus,
         string? captainStatus, Guid? locationId, string? boatType,
