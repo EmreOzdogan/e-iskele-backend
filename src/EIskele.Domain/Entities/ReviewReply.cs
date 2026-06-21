@@ -9,9 +9,4 @@ public class ReviewReply : BaseEntity, IAuditableEntity
 
     public string ReplyText { get; set; } = string.Empty;
 
-    // IAuditableEntity
-    public DateTime CreatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public Guid? UpdatedBy { get; set; }
 }

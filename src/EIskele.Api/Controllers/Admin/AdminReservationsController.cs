@@ -90,13 +90,13 @@ public class AdminReservationsController : BaseController
     [HttpGet("{id}/cancellation")]
     public IActionResult GetCancellation(Guid id)
     {
-        return Ok(new { success = true, data = (object)null });
+        return Ok(new { success = true, data = (object?)null });
     }
 
     [HttpGet("{id}/postpone-info")]
     public IActionResult GetPostponeInfo(Guid id)
     {
-        return Ok(new { success = true, data = (object)null });
+        return Ok(new { success = true, data = (object?)null });
     }
 
     [HttpGet("{id}/notifications")]

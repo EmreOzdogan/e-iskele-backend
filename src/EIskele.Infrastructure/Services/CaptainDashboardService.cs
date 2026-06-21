@@ -30,7 +30,30 @@ public class CaptainDashboardService : ICaptainDashboardService
             .FirstOrDefaultAsync(c => c.UserId == userGuid, cancellationToken);
 
         if (captain == null)
-            return Result<CaptainDashboardDataDto>.Failure(new EIskele.Application.Common.Errors.Error("Captain.NotFound", "Kaptan profili bulunamadı."));
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userGuid, cancellationToken);
+            if (user == null)
+                return Result<CaptainDashboardDataDto>.Failure(new EIskele.Application.Common.Errors.Error("User.NotFound", "Kullanıcı bulunamadı."));
+
+            return Result<CaptainDashboardDataDto>.Success(new CaptainDashboardDataDto
+            {
+                CaptainName = $"{user.FirstName} {user.LastName}",
+                TodayText = DateTime.UtcNow.ToString("dd MMMM yyyy, dddd"),
+                OperationStatus = "limited",
+                ProfileCompletionRate = 20,
+                Metrics = new List<CaptainDashboardMetricDto>
+                {
+                    new CaptainDashboardMetricDto { Key = "todayReservations", Title = "Bugünkü Rezervasyonlar", Value = 0, Description = "Bugün planlanan tur", Status = "info" },
+                    new CaptainDashboardMetricDto { Key = "pendingRequests", Title = "Bekleyen Talepler", Value = 0, Description = "Yanıt bekleyen rezervasyon", Status = "success" },
+                    new CaptainDashboardMetricDto { Key = "monthlyEarnings", Title = "Aylık Kazanç", Value = "₺0", Description = "Bu ay tahmini kazanç", Status = "success" },
+                    new CaptainDashboardMetricDto { Key = "activeBoats", Title = "Aktif Tekneler", Value = 0, Description = "Yayındaki tekneleriniz", Status = "default" }
+                },
+                TodayReservations = new List<CaptainDashboardReservationDto>(),
+                PendingReservations = new List<CaptainDashboardReservationDto>(),
+                BoatStatuses = new List<CaptainDashboardBoatStatusDto>(),
+                RecentReviews = new List<CaptainDashboardReviewDto>()
+            });
+        }
 
         var response = new CaptainDashboardDataDto
         {

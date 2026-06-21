@@ -20,7 +20,7 @@ public partial class BoatService
 
         if (captain == null)
         {
-            return Result<List<CaptainBoatListItemDto>>.Failure("CAPTAIN_NOT_FOUND", "Kaptan profili bulunamadı.");
+            return Result<List<CaptainBoatListItemDto>>.Success(new List<CaptainBoatListItemDto>());
         }
 
         var boats = await _dbContext.Boats

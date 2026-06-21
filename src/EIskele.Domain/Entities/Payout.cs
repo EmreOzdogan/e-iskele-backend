@@ -19,9 +19,4 @@ public class Payout : BaseEntity, IAuditableEntity
     public int RelatedReservationCount { get; set; }
     public string? Description { get; set; }
 
-    // IAuditableEntity
-    public DateTime CreatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public Guid? UpdatedBy { get; set; }
 }

@@ -33,4 +33,7 @@ public interface ILocationService
     Task<Result> UpdateHarborAsync(UpdateHarborDto dto, Guid currentUserId, CancellationToken cancellationToken);
 
     Task<Result> DeleteHarborAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken);
+
+    Task<Result<List<ActiveLocationDto>>> GetActiveLocationsAsync(CancellationToken cancellationToken);
+    Task<Result<List<ActiveHarborDto>>> GetActiveHarborsAsync(CancellationToken cancellationToken);
 }

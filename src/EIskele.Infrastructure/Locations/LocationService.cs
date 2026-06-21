@@ -422,4 +422,36 @@ public class LocationService : ILocationService
 
         return Result.Success();
     }
+
+    public async Task<Result<List<ActiveLocationDto>>> GetActiveLocationsAsync(CancellationToken cancellationToken)
+    {
+        var locations = await _context.Locations
+            .Where(x => x.Status == LocationStatus.Active)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Name)
+            .Select(x => new ActiveLocationDto
+            {
+                Id = x.Id,
+                Name = x.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        return Result<List<ActiveLocationDto>>.Success(locations);
+    }
+
+    public async Task<Result<List<ActiveHarborDto>>> GetActiveHarborsAsync(CancellationToken cancellationToken)
+    {
+        var harbors = await _context.Harbors
+            .Where(x => x.Status == LocationStatus.Active && x.Location.Status == LocationStatus.Active)
+            .OrderBy(x => x.Name)
+            .Select(x => new ActiveHarborDto
+            {
+                Id = x.Id,
+                LocationId = x.LocationId,
+                Name = x.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        return Result<List<ActiveHarborDto>>.Success(harbors);
+    }
 }
