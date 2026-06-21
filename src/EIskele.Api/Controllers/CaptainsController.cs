@@ -19,14 +19,11 @@ public class CaptainsController : BaseController
     }
 
     [HttpPost("apply")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> Apply([FromBody] CaptainApplicationRequest request, CancellationToken cancellationToken)
     {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var userId))
-        {
-            return Unauthorized(EIskele.Shared.Responses.ApiResponse.CreateFailure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
-        }
+        Guid.TryParse(userIdString, out var userId); // Defaults to Guid.Empty if not logged in
 
         var result = await _captainService.ApplyAsync(userId, request, cancellationToken);
         return HandleResult(result);

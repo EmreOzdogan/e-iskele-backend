@@ -12,14 +12,59 @@ namespace EIskele.Infrastructure.Services;
 public partial class CaptainService : ICaptainService
 {
     private readonly EIskeleDbContext _dbContext;
+    private readonly Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> _userManager;
+    private readonly EIskele.Application.Common.Notifications.INotificationService _notificationService;
 
-    public CaptainService(EIskeleDbContext dbContext)
+    public CaptainService(
+        EIskeleDbContext dbContext, 
+        Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> userManager,
+        EIskele.Application.Common.Notifications.INotificationService notificationService)
     {
         _dbContext = dbContext;
+        _userManager = userManager;
+        _notificationService = notificationService;
     }
 
     public async Task<Result<CaptainApplicationResponse>> ApplyAsync(Guid userId, CaptainApplicationRequest request, CancellationToken cancellationToken = default)
     {
+        if (userId == Guid.Empty)
+        {
+            var email = request.ApplicationType == "company" ? request.Company?.Email : request.Individual?.Email;
+            var phone = request.ApplicationType == "company" ? request.Company?.Phone : request.Individual?.Phone;
+            var fullName = request.ApplicationType == "company" ? request.Company?.AuthorizedPersonFullName : request.Individual?.FullName;
+            var password = request.ApplicationType == "company" ? request.Company?.Password : request.Individual?.Password;
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                return Result<CaptainApplicationResponse>.Failure("VALIDATION_ERROR", "E-posta ve şifre zorunludur.");
+            }
+
+            var existingUser = await _userManager.FindByEmailAsync(email);
+            if (existingUser != null)
+            {
+                return Result<CaptainApplicationResponse>.Failure("USER_EXISTS", "Bu e-posta adresi ile zaten bir kullanıcı mevcut.");
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                FirstName = fullName?.Split(' ').FirstOrDefault() ?? "Kaptan",
+                LastName = string.Join(" ", fullName?.Split(' ').Skip(1) ?? Array.Empty<string>()),
+                PhoneNumber = phone ?? ""
+            };
+
+            var result = await _userManager.CreateAsync(user, password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Result<CaptainApplicationResponse>.Failure("USER_CREATE_ERROR", $"Kullanıcı oluşturulamadı: {errors}");
+            }
+
+            await _userManager.AddToRoleAsync(user, "Captain");
+            userId = user.Id;
+        }
+
         var existingCaptain = await _dbContext.Captains.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (existingCaptain != null)
         {
@@ -40,7 +85,7 @@ public partial class CaptainService : ICaptainService
             Status = "UnderReview",
             AccountStatus = "Active",
             Address = request.ApplicationType == "company" ? request.Company?.Address ?? "" : request.Individual?.Address ?? "",
-            Iban = request.Payout.Iban
+            Iban = request.Payout?.Iban ?? string.Empty
         };
 
         if (request.ApplicationType == "company" && request.Company != null)
@@ -83,6 +128,25 @@ public partial class CaptainService : ICaptainService
 
         _dbContext.Captains.Add(captain);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Kaptan başvurusu alındı bildirimi gönder (Email)
+        var captainName = request.ApplicationType == "company" 
+            ? request.Company?.AuthorizedPersonFullName ?? "Kaptan"
+            : request.Individual?.FullName ?? "Kaptan";
+
+        var notificationRequest = new EIskele.Application.Common.Notifications.NotificationRequest
+        {
+            UserId = userId,
+            TemplateCode = "CAPTAIN_APPLICATION_RECEIVED",
+            Channel = "Email",
+            Parameters = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { "ApplicationNo", captain.ApplicationNo },
+                { "CaptainName", captainName }
+            }
+        };
+        
+        await _notificationService.SendAsync(notificationRequest, cancellationToken);
 
         return Result<CaptainApplicationResponse>.Success(new CaptainApplicationResponse
         {

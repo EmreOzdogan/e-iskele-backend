@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EIskele.Application.Common.Results;
+using EIskele.Application.Captains;
 using EIskele.Application.Layout;
 using EIskele.Domain.Enums;
 using EIskele.Persistence;
@@ -14,10 +15,12 @@ namespace EIskele.Infrastructure.Services;
 public class CaptainLayoutService : ICaptainLayoutService
 {
     private readonly EIskeleDbContext _context;
+    private readonly ICaptainDocumentsService _documentsService;
 
-    public CaptainLayoutService(EIskeleDbContext context)
+    public CaptainLayoutService(EIskeleDbContext context, ICaptainDocumentsService documentsService)
     {
         _context = context;
+        _documentsService = documentsService;
     }
 
     public async Task<Result<CaptainLayoutDataDto>> GetLayoutDataAsync(string userId, CancellationToken cancellationToken = default)
@@ -48,6 +51,36 @@ public class CaptainLayoutService : ICaptainLayoutService
 
             var primaryBoat = boats.FirstOrDefault();
 
+            string accountStatus;
+            if (captain == null)
+            {
+                accountStatus = "pendingReview";
+            }
+            else if (captain.Status == "Approved")
+            {
+                accountStatus = "approved";
+            }
+            else if (captain.Status == "Rejected")
+            {
+                accountStatus = "rejected";
+            }
+            else if (captain.Status == "Suspended")
+            {
+                accountStatus = "suspended";
+            }
+            else
+            {
+                var docsResult = await _documentsService.GetCaptainDocumentsAsync(userGuid, cancellationToken);
+                if (docsResult.IsSuccess && docsResult.Value.Summary.NotUploaded == 0 && docsResult.Value.Summary.NeedsUpdate == 0 && docsResult.Value.Summary.Rejected == 0)
+                {
+                    accountStatus = "pendingReview";
+                }
+                else
+                {
+                    accountStatus = "missingDocuments";
+                }
+            }
+
             // Populate Profile
             var profile = new CaptainProfileLayoutDto
             {
@@ -58,7 +91,7 @@ public class CaptainLayoutService : ICaptainLayoutService
                 AvatarUrl = "",
                 CompanyName = captain?.Company?.CompanyName ?? "",
                 PrimaryBoatName = primaryBoat?.Name ?? "Tekne Eklenmedi",
-                AccountStatus = captain == null ? "pendingReview" : (captain.Status == "Approved" ? "active" : "missingDocuments")
+                AccountStatus = accountStatus
             };
 
             // Populate Counters

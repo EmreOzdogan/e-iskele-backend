@@ -17,4 +17,6 @@ public interface ICaptainService
     Task<Result<AdminCaptainDetailDto>> GetAdminCaptainDetailAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Result> SuspendCaptainAsync(Guid id, string reason, CancellationToken cancellationToken = default);
     Task<Result> ReactivateCaptainAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result> ApproveDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
+    Task<Result> RejectDocumentAsync(Guid documentId, string reason, CancellationToken cancellationToken = default);
 }

@@ -43,7 +43,14 @@ builder.Services.AddCors(options =>
 });
 
 
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+})
     .AddEntityFrameworkStores<EIskeleDbContext>()
     .AddDefaultTokenProviders();
 
@@ -71,6 +78,22 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value.Errors.Count > 0)
+                .Select(e => new EIskele.Shared.Responses.ValidationError
+                {
+                    Field = e.Key,
+                    Message = e.Value.Errors.First().ErrorMessage
+                }).ToList();
+
+            var response = EIskele.Shared.Responses.ApiResponse.CreateFailure("VALIDATION_ERROR", "Girilen bilgiler geçersiz.", errors);
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(response);
+        };
     });
 builder.Services.AddOpenApi(options =>
 {
@@ -119,6 +142,9 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await EIskele.Persistence.EIskeleDbContextSeed.SeedRolesAsync(services);
+    
+    var dbContext = services.GetRequiredService<EIskele.Persistence.EIskeleDbContext>();
+    await EIskele.Persistence.EIskeleDbContextSeed.SeedNotificationTemplatesAsync(dbContext);
 }
 
 app.UseMiddleware<EIskele.Api.Middlewares.GlobalExceptionMiddleware>();

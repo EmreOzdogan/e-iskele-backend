@@ -66,4 +66,18 @@ public class AdminCaptainsController : BaseController
         var result = await _captainService.ReactivateCaptainAsync(id, cancellationToken);
         return HandleResult(result);
     }
+
+    [HttpPost("documents/{documentId:guid}/approve")]
+    public async Task<IActionResult> ApproveDocument(Guid documentId, CancellationToken cancellationToken)
+    {
+        var result = await _captainService.ApproveDocumentAsync(documentId, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPost("documents/{documentId:guid}/reject")]
+    public async Task<IActionResult> RejectDocument(Guid documentId, [FromBody] string reason, CancellationToken cancellationToken)
+    {
+        var result = await _captainService.RejectDocumentAsync(documentId, reason, cancellationToken);
+        return HandleResult(result);
+    }
 }

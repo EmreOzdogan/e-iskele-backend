@@ -64,14 +64,15 @@ public class LocalFileStorageService : IFileStorageService
             CreatedAt = DateTime.UtcNow
         };
 
-        _dbContext.StoredFiles.Add(storedFile);
+        await _dbContext.StoredFiles.AddAsync(storedFile, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return new FileUploadResult
         {
             Success = true,
+            FileId = storedFile.Id,
             StoragePath = filePath,
-            PublicUrl = storedFile.PublicUrl,
+            PublicUrl = request.IsPublic ? $"/uploads/{uniqueFileName}" : string.Empty,
             StoredFileName = uniqueFileName,
             SizeInBytes = request.Content.Length,
             StorageProvider = "Local"

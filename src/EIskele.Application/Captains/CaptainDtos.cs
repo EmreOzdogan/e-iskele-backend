@@ -10,7 +10,7 @@ public class CaptainApplicationRequest
     public ApplicationIndividualDto? Individual { get; set; }
     public ApplicationCompanyDto? Company { get; set; }
     public ApplicationBoatDto Boat { get; set; } = new();
-    public ApplicationPayoutDto Payout { get; set; } = new();
+    public ApplicationPayoutDto? Payout { get; set; }
     public Dictionary<string, Guid> Documents { get; set; } = new();
 }
 
@@ -22,6 +22,7 @@ public class ApplicationIndividualDto
     public string? BirthDate { get; set; }
     public string Address { get; set; } = string.Empty;
     public string? IdentityNumber { get; set; }
+    public string Password { get; set; } = string.Empty;
 }
 
 public class ApplicationCompanyDto
@@ -33,6 +34,7 @@ public class ApplicationCompanyDto
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }
 
 public class ApplicationBoatDto

@@ -21,7 +21,7 @@ public class FilesController : BaseController
     }
 
     [HttpPost("upload")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string fileType, [FromForm] bool isPublic = false, CancellationToken cancellationToken = default)
     {
         if (file == null || file.Length == 0)
@@ -30,10 +30,7 @@ public class FilesController : BaseController
         }
 
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var userId))
-        {
-            return Unauthorized(ApiResponse.CreateFailure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
-        }
+        Guid.TryParse(userIdString, out var userId); // Defaults to Guid.Empty if not logged in
 
         var request = new FileUploadRequest
         {

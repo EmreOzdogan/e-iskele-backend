@@ -48,7 +48,15 @@ public partial class CaptainService
 
         if (!string.IsNullOrWhiteSpace(query.ApplicationStatus))
         {
-            q = q.Where(c => c.Status.Equals(query.ApplicationStatus, StringComparison.OrdinalIgnoreCase));
+            var appStatus = query.ApplicationStatus.ToLower();
+            if (appStatus == "inreview")
+                q = q.Where(c => c.Status == "UnderReview");
+            else if (appStatus == "missingdocument")
+                q = q.Where(c => c.Status == "MissingDocument");
+            else if (appStatus == "suspended")
+                q = q.Where(c => c.AccountStatus == "Suspended");
+            else
+                q = q.Where(c => c.Status.ToLower() == appStatus);
         }
 
         if (!string.IsNullOrWhiteSpace(query.CaptainStatus))
@@ -79,8 +87,8 @@ public partial class CaptainService
                 Harbor = c.Harbor,
                 TotalBoatCount = c.Boats.Count,
                 ActiveBoatCount = c.Boats.Count(b => b.Status == EIskele.Domain.Enums.BoatStatus.Published),
-                DocumentStatus = "completed", // Mocked for now, until document workflow is fully built
-                ApplicationStatus = c.Status.ToLower(),
+                DocumentStatus = "", // Will be populated dynamically below
+                ApplicationStatus = c.Status == "UnderReview" ? "inReview" : c.Status == "MissingDocument" ? "missingDocument" : c.Status.ToLower(),
                 AccountStatus = c.AccountStatus.ToLower(),
                 AverageRating = 0, // Mocked for now
                 TotalReservationCount = 0, // Mocked for now
@@ -88,6 +96,28 @@ public partial class CaptainService
                 CreatedAt = c.CreatedAt
             })
             .ToListAsync(cancellationToken);
+
+        var captainIds = items.Select(x => x.Id.ToString()).ToList();
+        var files = await _dbContext.StoredFiles
+            .Where(f => f.RelatedEntityType == "CaptainDocument" && captainIds.Contains(f.RelatedEntityId))
+            .ToListAsync(cancellationToken);
+
+        foreach (var item in items)
+        {
+            var captainFiles = files.Where(f => f.RelatedEntityId == item.Id.ToString()).ToList();
+            int requiredDocCount = (item.ApplicationType == "company" ? 4 : 3) + (item.TotalBoatCount * 2);
+
+            if (captainFiles.Count < requiredDocCount)
+                item.DocumentStatus = "missing";
+            else if (captainFiles.Any(f => f.Status == "rejected"))
+                item.DocumentStatus = "rejected";
+            else if (captainFiles.Any(f => f.Status == "pendingReview" || string.IsNullOrEmpty(f.Status) || f.Status == "uploaded"))
+                item.DocumentStatus = "pendingReview";
+            else if (captainFiles.Any(f => f.Status == "expiringSoon"))
+                item.DocumentStatus = "expiringSoon";
+            else
+                item.DocumentStatus = "completed";
+        }
 
         var result = new PagedResult<AdminCaptainListItemDto>
         {
@@ -132,7 +162,7 @@ public partial class CaptainService
             Phone = c.User.PhoneNumber ?? string.Empty,
             Location = c.Location,
             Harbor = c.Harbor,
-            ApplicationStatus = c.Status.ToLower(),
+            ApplicationStatus = c.Status == "UnderReview" ? "inReview" : c.Status == "MissingDocument" ? "missingDocument" : c.Status.ToLower(),
             AccountStatus = c.AccountStatus.ToLower(),
             DocumentSummaryStatus = "completed",
             CreatedAt = c.CreatedAt,
@@ -166,15 +196,19 @@ public partial class CaptainService
                 Status = "success"
             }).ToList(),
 
-            Documents = storedFiles.Select(f => new CaptainDocumentDto
+            Documents = storedFiles.Select(f => 
             {
-                Id = f.Id,
-                DocumentType = "identity", // Should be parsed from file metadata
-                Title = f.OriginalFileName,
-                FileName = f.OriginalFileName,
-                FileSizeText = $"{Math.Round(f.SizeInBytes / 1024.0, 2)} KB",
-                UploadedAt = f.CreatedAt,
-                Status = "completed"
+                var (docTitle, docType) = GetDocumentInfo(f.FileType);
+                return new CaptainDocumentDto
+                {
+                    Id = f.Id,
+                    DocumentType = docType,
+                    Title = docTitle,
+                    FileName = f.OriginalFileName,
+                    FileSizeText = $"{Math.Round(f.SizeInBytes / 1024.0, 2)} KB",
+                    UploadedAt = f.CreatedAt,
+                    Status = string.IsNullOrEmpty(f.Status) ? "completed" : (f.Status == "approved" ? "completed" : f.Status)
+                };
             }).ToList(),
             
             PerformanceMetrics = new CaptainPerformanceMetricsDto
@@ -223,6 +257,19 @@ public partial class CaptainService
             });
         }
 
+        var requiredDocCount = (detail.ApplicationType == "company" ? 4 : 3) + (c.Boats.Count * 2);
+
+        if (storedFiles.Count < requiredDocCount)
+            detail.DocumentSummaryStatus = "missing";
+        else if (storedFiles.Any(f => f.Status == "rejected"))
+            detail.DocumentSummaryStatus = "rejected";
+        else if (storedFiles.Any(f => f.Status == "pendingReview" || string.IsNullOrEmpty(f.Status) || f.Status == "uploaded"))
+            detail.DocumentSummaryStatus = "pendingReview";
+        else if (storedFiles.Any(f => f.Status == "expiringSoon"))
+            detail.DocumentSummaryStatus = "expiringSoon";
+        else
+            detail.DocumentSummaryStatus = "completed";
+
         return Result<AdminCaptainDetailDto>.Success(detail);
     }
 
@@ -257,5 +304,61 @@ public partial class CaptainService
             return input;
 
         return $"{input.Substring(0, start)}***{input.Substring(input.Length - end)}";
+    }
+
+    public async Task<Result> ApproveDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
+    {
+        var doc = await _dbContext.StoredFiles.FirstOrDefaultAsync(f => f.Id == documentId, cancellationToken);
+        if (doc == null)
+            return Result.Failure("DOCUMENT_NOT_FOUND", "Belge bulunamadı.");
+
+        doc.Status = "approved";
+
+        var audit = new EIskele.Domain.Entities.AuditLog
+        {
+            Action = "ApproveDocument",
+            EntityType = "StoredFile",
+            EntityId = documentId.ToString(),
+            Description = "Belge onaylandı."
+        };
+        _dbContext.AuditLogs.Add(audit);
+        
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    public async Task<Result> RejectDocumentAsync(Guid documentId, string reason, CancellationToken cancellationToken = default)
+    {
+        var doc = await _dbContext.StoredFiles.FirstOrDefaultAsync(f => f.Id == documentId, cancellationToken);
+        if (doc == null)
+            return Result.Failure("DOCUMENT_NOT_FOUND", "Belge bulunamadı.");
+
+        doc.Status = "rejected";
+
+        var audit = new EIskele.Domain.Entities.AuditLog
+        {
+            Action = "RejectDocument",
+            EntityType = "StoredFile",
+            EntityId = documentId.ToString(),
+            Description = reason
+        };
+        _dbContext.AuditLogs.Add(audit);
+        
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    private (string title, string type) GetDocumentInfo(string fileType)
+    {
+        if (string.IsNullOrEmpty(fileType)) return ("Bilinmeyen Belge", "other");
+
+        if (fileType == "doc_captain_license") return ("Kaptan Yeterlilik Belgesi", "license");
+        if (fileType == "doc_captain_id") return ("Kimlik Fotokopisi", "identity");
+        if (fileType == "doc_captain_iban") return ("IBAN Doğrulama Belgesi", "other");
+        if (fileType == "doc_company_tax") return ("Vergi Levhası", "tax");
+        if (fileType.StartsWith("doc_boat_reg_")) return ("Tekne Ruhsatı", "other");
+        if (fileType.StartsWith("doc_boat_ins_")) return ("Sigorta Belgesi", "insurance");
+
+        return ("Diğer Belge", "other");
     }
 }
