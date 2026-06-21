@@ -99,7 +99,7 @@ public partial class CaptainService
 
         var captainIds = items.Select(x => x.Id.ToString()).ToList();
         var files = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "CaptainDocument" && captainIds.Contains(f.RelatedEntityId))
+            .Where(f => f.RelatedEntityType == "CaptainDocument" && captainIds.Contains(f.RelatedEntityId) && !f.IsDeleted)
             .ToListAsync(cancellationToken);
 
         foreach (var item in items)
@@ -143,7 +143,7 @@ public partial class CaptainService
 
         // Stored files related to captain document
         var storedFiles = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "CaptainDocument" && f.RelatedEntityId == id.ToString())
+            .Where(f => f.RelatedEntityType == "CaptainDocument" && f.RelatedEntityId == id.ToString() && !f.IsDeleted)
             .ToListAsync(cancellationToken);
 
         var auditLogs = await _dbContext.AuditLogs
@@ -317,8 +317,8 @@ public partial class CaptainService
         var audit = new EIskele.Domain.Entities.AuditLog
         {
             Action = "ApproveDocument",
-            EntityType = "StoredFile",
-            EntityId = documentId.ToString(),
+            EntityType = "CaptainDocument",
+            EntityId = $"{doc.OwnerUserId}_{doc.FileType}",
             Description = "Belge onaylandı."
         };
         _dbContext.AuditLogs.Add(audit);
@@ -334,16 +334,24 @@ public partial class CaptainService
             return Result.Failure("DOCUMENT_NOT_FOUND", "Belge bulunamadı.");
 
         doc.Status = "rejected";
+        doc.IsDeleted = true;
+        doc.DeletedAt = DateTime.UtcNow;
 
         var audit = new EIskele.Domain.Entities.AuditLog
         {
             Action = "RejectDocument",
-            EntityType = "StoredFile",
-            EntityId = documentId.ToString(),
+            EntityType = "CaptainDocument",
+            EntityId = $"{doc.OwnerUserId}_{doc.FileType}",
             Description = reason
         };
         _dbContext.AuditLogs.Add(audit);
         
+        // Physically delete file
+        if (!string.IsNullOrEmpty(doc.StoragePath))
+        {
+            await _fileStorageService.DeleteAsync(doc.StoragePath, cancellationToken);
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

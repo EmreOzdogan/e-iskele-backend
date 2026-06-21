@@ -44,7 +44,7 @@ public class CaptainDocumentsService : ICaptainDocumentsService
         var documents = new List<CaptainHubDocumentDto>();
 
         var auditLogs = await _dbContext.AuditLogs
-            .Where(a => a.EntityType == "StoredFile")
+            .Where(a => a.EntityType == "CaptainDocument")
             .ToListAsync(cancellationToken);
 
         foreach (var expectedDoc in expectedDocs)
@@ -52,51 +52,78 @@ public class CaptainDocumentsService : ICaptainDocumentsService
             var matchedFile = storedFiles.OrderByDescending(x => x.CreatedAt)
                                          .FirstOrDefault(f => f.FileType == expectedDoc.Id);
 
+            var fileLogs = auditLogs.Where(a => a.EntityId == $"{userId}_{expectedDoc.Id}").OrderBy(a => a.CreatedAt).ToList();
+            var lastReject = fileLogs.LastOrDefault(a => a.Action == "RejectDocument");
+
             if (matchedFile != null)
             {
                 expectedDoc.Status = string.IsNullOrEmpty(matchedFile.Status) ? "uploaded" : matchedFile.Status; 
                 expectedDoc.FileName = matchedFile.OriginalFileName;
                 expectedDoc.UploadedAtText = matchedFile.CreatedAt.ToString("dd MMMM yyyy");
 
-                var fileLogs = auditLogs.Where(a => a.EntityId == matchedFile.Id.ToString()).OrderBy(a => a.CreatedAt).ToList();
-                
-                var lastReject = fileLogs.LastOrDefault(a => a.Action == "RejectDocument");
                 if (lastReject != null && expectedDoc.Status == "rejected")
                 {
                     expectedDoc.RejectionReason = lastReject.Description;
                 }
+            }
+            else
+            {
+                // File deleted or not uploaded
+                expectedDoc.Status = "notUploaded";
+                if (lastReject != null)
+                {
+                    // If we have a reject log but no file, it's missing but we can still show rejection reason as to why it's missing.
+                    // Wait, the UI expects status to be "rejected" to show it as "Eksik" (which we mapped from "rejected").
+                    // Actually, if it's missing because it was rejected, we can set status to "rejected" so UI badge says "Eksik" and red.
+                    expectedDoc.Status = "rejected";
+                    expectedDoc.RejectionReason = lastReject.Description;
+                }
+            }
 
-                expectedDoc.History.Add(new CaptainDocumentHistoryDto
+            foreach (var log in fileLogs)
+            {
+                if (log.Action == "UploadDocument")
+                {
+                    expectedDoc.History.Add(new CaptainDocumentHistoryDto
+                    {
+                        Id = log.Id.ToString(),
+                        DateText = log.CreatedAt.ToString("dd MMMM yyyy HH:mm"),
+                        Title = "Belge Yüklendi",
+                        Description = "Belge sisteme yüklendi."
+                    });
+                }
+                else if (log.Action == "RejectDocument")
+                {
+                    expectedDoc.History.Add(new CaptainDocumentHistoryDto
+                    {
+                        Id = log.Id.ToString(),
+                        DateText = log.CreatedAt.ToString("dd MMMM yyyy HH:mm"),
+                        Title = "Belge Reddedildi",
+                        Description = log.Description
+                    });
+                }
+                else if (log.Action == "ApproveDocument")
+                {
+                    expectedDoc.History.Add(new CaptainDocumentHistoryDto
+                    {
+                        Id = log.Id.ToString(),
+                        DateText = log.CreatedAt.ToString("dd MMMM yyyy HH:mm"),
+                        Title = "Belge Onaylandı",
+                        Description = "Belge admin tarafından onaylandı."
+                    });
+                }
+            }
+            
+            // Fallback for upload history if there is a file but no upload log
+            if (matchedFile != null && !fileLogs.Any(l => l.Action == "UploadDocument"))
+            {
+                expectedDoc.History.Insert(0, new CaptainDocumentHistoryDto
                 {
                     Id = matchedFile.Id.ToString() + "_upload",
                     DateText = matchedFile.CreatedAt.ToString("dd MMMM yyyy HH:mm"),
                     Title = "Belge Yüklendi",
                     Description = "Belge sisteme yüklendi."
                 });
-
-                foreach (var log in fileLogs)
-                {
-                    if (log.Action == "RejectDocument")
-                    {
-                        expectedDoc.History.Add(new CaptainDocumentHistoryDto
-                        {
-                            Id = log.Id.ToString(),
-                            DateText = log.CreatedAt.ToString("dd MMMM yyyy HH:mm"),
-                            Title = "Belge Reddedildi",
-                            Description = log.Description
-                        });
-                    }
-                    else if (log.Action == "ApproveDocument")
-                    {
-                        expectedDoc.History.Add(new CaptainDocumentHistoryDto
-                        {
-                            Id = log.Id.ToString(),
-                            DateText = log.CreatedAt.ToString("dd MMMM yyyy HH:mm"),
-                            Title = "Belge Onaylandı",
-                            Description = "Belge admin tarafından onaylandı."
-                        });
-                    }
-                }
             }
             
             documents.Add(expectedDoc);
@@ -166,13 +193,22 @@ public class CaptainDocumentsService : ICaptainDocumentsService
         if (!uploadResult.Success)
             return Result.Failure("UPLOAD_FAILED", "Dosya yüklenemedi.");
 
-        // We need to fetch the newly created StoredFile to update its status
         var newFile = await _dbContext.Set<StoredFile>()
             .FirstOrDefaultAsync(f => f.StoredFileName == uploadResult.StoredFileName, cancellationToken);
 
         if (newFile != null)
         {
             newFile.Status = "pendingReview";
+
+            var audit = new EIskele.Domain.Entities.AuditLog
+            {
+                Action = "UploadDocument",
+                EntityType = "CaptainDocument",
+                EntityId = $"{userId}_{documentId}",
+                Description = "Belge sisteme yüklendi."
+            };
+            _dbContext.AuditLogs.Add(audit);
+
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 

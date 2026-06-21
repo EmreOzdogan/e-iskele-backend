@@ -14,15 +14,18 @@ public partial class CaptainService : ICaptainService
     private readonly EIskeleDbContext _dbContext;
     private readonly Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> _userManager;
     private readonly EIskele.Application.Common.Notifications.INotificationService _notificationService;
+    private readonly EIskele.Application.Common.Files.IFileStorageService _fileStorageService;
 
     public CaptainService(
         EIskeleDbContext dbContext, 
         Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> userManager,
-        EIskele.Application.Common.Notifications.INotificationService notificationService)
+        EIskele.Application.Common.Notifications.INotificationService notificationService,
+        EIskele.Application.Common.Files.IFileStorageService fileStorageService)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _notificationService = notificationService;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<Result<CaptainApplicationResponse>> ApplyAsync(Guid userId, CaptainApplicationRequest request, CancellationToken cancellationToken = default)
