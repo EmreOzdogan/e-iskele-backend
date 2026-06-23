@@ -43,19 +43,19 @@ public class DashboardService : IDashboardService
             new DashboardMetricDto { Id = "m2", Title = "Toplam Kaptan", Value = captainsCount.ToString(), Description = "Onaylı ve aktif kaptan sayısı.", Icon = "anchor" },
             new DashboardMetricDto { Id = "m3", Title = "Toplam Tekne", Value = boatsCount.ToString(), Description = "Sistemde kayıtlı toplam tekne.", Icon = "ship" },
             new DashboardMetricDto { Id = "m4", Title = "Aktif Tekne", Value = activeBoatsCount.ToString(), Description = "Müşterilere listelenen açık tekneler.", Icon = "check-circle" },
-            new DashboardMetricDto { Id = "m5", Title = "Bekleyen Başvurular", Value = pendingCaptainsCount.ToString(), Description = "İncelenmesi gereken kaptan başvuruları.", Icon = "file-text", ChangeType = pendingCaptainsCount > 0 ? "warning" : "neutral", Href = "/kaptanlar/basvurular" },
-            new DashboardMetricDto { Id = "m6", Title = "Onay Bekleyen Tekneler", Value = pendingBoatsCount.ToString(), Description = "Yayına alınmak için kontrol bekleyen tekneler.", Icon = "alert-circle", ChangeType = pendingBoatsCount > 0 ? "warning" : "neutral", Href = "/tekneler/onay-bekleyenler" },
+            new DashboardMetricDto { Id = "m5", Title = "Bekleyen Başvurular", Value = pendingCaptainsCount.ToString(), Description = "İncelenmesi gereken kaptan başvuruları.", Icon = "file-text", ChangeType = pendingCaptainsCount > 0 ? "warning" : "neutral", Href = "/kaptanlar" },
+            new DashboardMetricDto { Id = "m6", Title = "Onay Bekleyen Tekneler", Value = pendingBoatsCount.ToString(), Description = "Yayına alınmak için kontrol bekleyen tekneler.", Icon = "alert-circle", ChangeType = pendingBoatsCount > 0 ? "warning" : "neutral", Href = "/tekneler" },
             new DashboardMetricDto { Id = "m7", Title = "Bugünkü Rezervasyonlar", Value = todayReservationsCount.ToString(), Description = "Bugün oluşturulan rezervasyonlar.", Icon = "calendar", Href = "/rezervasyonlar?date=today" },
             new DashboardMetricDto { Id = "m8", Title = "Aylık Ciro", Value = $"₺{monthlyRevenue:N2}", Description = "Bu ayki toplam ödemeler.", Icon = "credit-card" }
         };
 
         if (pendingCaptainsCount > 0)
         {
-            response.OperationAlerts.Add(new OperationAlertDto { Id = "a1", Title = $"{pendingCaptainsCount} kaptan başvurusu inceleme bekliyor.", Description = "Gecikmiş değerlendirmeler olabilir.", Priority = "high", Href = "/kaptanlar/basvurular" });
+            response.OperationAlerts.Add(new OperationAlertDto { Id = "a1", Title = $"{pendingCaptainsCount} kaptan başvurusu inceleme bekliyor.", Description = "Gecikmiş değerlendirmeler olabilir.", Priority = "high", Href = "/kaptanlar" });
         }
         if (pendingBoatsCount > 0)
         {
-            response.OperationAlerts.Add(new OperationAlertDto { Id = "a2", Title = $"{pendingBoatsCount} tekne yayın onayı bekliyor.", Description = "Tekne görsellerini ve ruhsatlarını kontrol edin.", Priority = "high", Href = "/tekneler/onay-bekleyenler" });
+            response.OperationAlerts.Add(new OperationAlertDto { Id = "a2", Title = $"{pendingBoatsCount} tekne yayın onayı bekliyor.", Description = "Tekne görsellerini ve ruhsatlarını kontrol edin.", Priority = "high", Href = "/tekneler" });
         }
 
         // Reservation Trend

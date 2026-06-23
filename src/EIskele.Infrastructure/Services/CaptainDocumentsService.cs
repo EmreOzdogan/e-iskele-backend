@@ -44,7 +44,7 @@ public class CaptainDocumentsService : ICaptainDocumentsService
         var documents = new List<CaptainHubDocumentDto>();
 
         var auditLogs = await _dbContext.AuditLogs
-            .Where(a => a.EntityType == "CaptainDocument")
+            .Where(a => a.EntityType.StartsWith("CaptainDocument_"))
             .ToListAsync(cancellationToken);
 
         foreach (var expectedDoc in expectedDocs)
@@ -52,7 +52,7 @@ public class CaptainDocumentsService : ICaptainDocumentsService
             var matchedFile = storedFiles.OrderByDescending(x => x.CreatedAt)
                                          .FirstOrDefault(f => f.FileType == expectedDoc.Id);
 
-            var fileLogs = auditLogs.Where(a => a.EntityId == $"{userId}_{expectedDoc.Id}").OrderBy(a => a.CreatedAt).ToList();
+            var fileLogs = auditLogs.Where(a => a.EntityType == $"CaptainDocument_{expectedDoc.Id}" && a.EntityId == userId.ToString()).OrderBy(a => a.CreatedAt).ToList();
             var lastReject = fileLogs.LastOrDefault(a => a.Action == "RejectDocument");
 
             if (matchedFile != null)
@@ -203,8 +203,8 @@ public class CaptainDocumentsService : ICaptainDocumentsService
             var audit = new EIskele.Domain.Entities.AuditLog
             {
                 Action = "UploadDocument",
-                EntityType = "CaptainDocument",
-                EntityId = $"{userId}_{documentId}",
+                EntityType = $"CaptainDocument_{documentId}",
+                EntityId = userId.ToString(),
                 Description = "Belge sisteme yüklendi."
             };
             _dbContext.AuditLogs.Add(audit);

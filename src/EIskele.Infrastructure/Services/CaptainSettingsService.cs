@@ -37,6 +37,20 @@ public class CaptainSettingsService : ICaptainSettingsService
 
         var dto = new CaptainSettingsDto
         {
+            Account = new CaptainAccountDto
+            {
+                Id = user.Id.ToString(),
+                FullName = $"{user.FirstName} {user.LastName}",
+                Email = user.Email ?? string.Empty,
+                EmailVerified = user.EmailConfirmed,
+                Phone = user.PhoneNumber ?? string.Empty,
+                PhoneVerified = user.PhoneNumberConfirmed,
+                AccountType = captain.ApplicationType?.ToLower() ?? "individual",
+                VerificationStatus = captain.Status == "UnderReview" ? "pendingReview" : captain.Status == "MissingDocument" ? "missingInfo" : captain.Status == "Approved" ? "verified" : "notStarted",
+                DocumentStatusText = captain.Status == "Approved" ? "Tamamlandı" : "Eksik / Bekliyor",
+                PaymentStatusText = string.IsNullOrEmpty(captain.Iban) ? "Eklenmedi" : "Doğrulandı",
+                LastUpdatedText = captain.UpdatedAt?.ToString("dd MMM yyyy") ?? string.Empty
+            },
             Profile = new CaptainProfileDto
             {
                 FirstName = user.FirstName,
@@ -51,13 +65,21 @@ public class CaptainSettingsService : ICaptainSettingsService
                 Status = captain.Status ?? "Unknown",
                 SubmittedAt = user.CreatedAt.ToString("o"),
                 DocumentStatus = "Approved", // Simplified
-                VerificationLevel = "Pro"
+                VerificationLevel = "Pro",
+                AccountType = captain.ApplicationType?.ToLower() ?? "individual",
+                ReviewStatus = captain.Status == "UnderReview" ? "pendingReview" : captain.Status == "MissingDocument" ? "missingInfo" : captain.Status == "Approved" ? "verified" : "notStarted"
             },
             Payment = new CaptainPaymentDto
             {
                 BankName = string.Empty,
-                Iban = captain.Iban ?? string.Empty,
-                AccountHolderName = string.Empty
+                IbanMasked = !string.IsNullOrEmpty(captain.Iban) && captain.Iban.Length > 4 
+                    ? new string('*', captain.Iban.Length - 4) + captain.Iban.Substring(captain.Iban.Length - 4)
+                    : string.Empty,
+                IbanRaw = captain.Iban,
+                AccountHolderName = string.Empty,
+                InvoiceType = "individual",
+                VerificationStatus = string.IsNullOrEmpty(captain.Iban) ? "notStarted" : "verified",
+                LastUpdatedText = captain.UpdatedAt?.ToString("dd MMM yyyy")
             },
             Security = new CaptainSecurityDto
             {
@@ -95,8 +117,20 @@ public class CaptainSettingsService : ICaptainSettingsService
                 ContractDate = user.LegalAgreements.FirstOrDefault(a => a.AgreementName == "KVKK")?.CreatedAt.ToString("o") ?? "2024-01-01T00:00:00Z",
                 Permissions = new LegalPermissionsDto
                 {
-                    Kvkk = user.LegalAgreements.Any(a => a.AgreementName == "KVKK" && a.Status == "accepted"),
-                    Commercial = user.LegalAgreements.Any(a => a.AgreementName == "Commercial" && a.Status == "accepted")
+                    CommercialEmail = user.LegalAgreements.Any(a => a.AgreementName == "Commercial" && a.Status == "accepted"),
+                    CampaignSms = user.LegalAgreements.Any(a => a.AgreementName == "Commercial" && a.Status == "accepted"),
+                    WhatsappInfo = false,
+                    CookiePreferences = true
+                }
+            },
+            VerificationSummary = new CaptainVerificationSummaryDto
+            {
+                CompletionRate = 80,
+                Items = new List<VerificationSummaryItemDto>
+                {
+                    new VerificationSummaryItemDto { Key = "profile", Label = "Profil Bilgileri", Status = "completed", ActionPath = "?tab=profil" },
+                    new VerificationSummaryItemDto { Key = "documents", Label = "Resmi Belgeler", Status = captain.Status == "Approved" ? "completed" : "missing", ActionPath = "/belgeler" },
+                    new VerificationSummaryItemDto { Key = "payment", Label = "Ödeme Bilgileri", Status = string.IsNullOrEmpty(captain.Iban) ? "missing" : "completed", ActionPath = "?tab=odeme" }
                 }
             }
         };

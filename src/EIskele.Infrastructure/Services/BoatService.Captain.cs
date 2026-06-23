@@ -73,11 +73,11 @@ public partial class BoatService
             Capacity = boat.Capacity,
             LocationId = boat.LocationId,
             HarborId = boat.HarborId,
-            Description = "", // Assuming missing from entity for MVP or add later
-            BrandModel = "", // Assuming missing
-            BoatType = "", // Assuming missing
-            ProductionYear = "", // Assuming missing
-            Length = "", // Assuming missing
+            Description = boat.Description,
+            BrandModel = boat.BrandModel,
+            BoatType = boat.BoatType,
+            ProductionYear = boat.ProductionYear,
+            Length = boat.Length,
             Features = boat.BoatFeatures.Where(f => f.IsAvailable).Select(f => f.Name).ToList()
         };
 
@@ -108,6 +108,11 @@ public partial class BoatService
         boat.Capacity = request.Capacity;
         boat.LocationId = request.LocationId;
         boat.HarborId = request.HarborId;
+        boat.Description = request.Description;
+        boat.BrandModel = request.BrandModel;
+        boat.BoatType = request.BoatType;
+        boat.ProductionYear = request.ProductionYear;
+        boat.Length = request.Length;
 
         // If published, push back to under review
         if (boat.Status == BoatStatus.Published)
@@ -154,6 +159,11 @@ public partial class BoatService
             HarborId = request.HarborId,
             Name = request.Name,
             Capacity = request.Capacity,
+            Description = request.Description,
+            BrandModel = request.BrandModel,
+            BoatType = request.BoatType,
+            ProductionYear = request.ProductionYear,
+            Length = request.Length,
             Status = BoatStatus.Draft,
             Slug = Guid.NewGuid().ToString("N").Substring(0, 8) // Temp slug
         };

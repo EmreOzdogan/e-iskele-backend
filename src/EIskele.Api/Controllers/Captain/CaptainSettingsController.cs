@@ -24,6 +24,15 @@ public class CaptainSettingsController : BaseController
         return HandleResult(result);
     }
 
+    [AllowAnonymous]
+    [HttpGet("test-json")]
+    public IActionResult TestJson()
+    {
+        var dto = new CaptainSettingsDto();
+        return Ok(EIskele.Shared.Responses.ApiResponse<CaptainSettingsDto>.CreateSuccess(dto));
+    }
+
+
     [HttpPut("profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateCaptainProfileDto request, CancellationToken cancellationToken)
     {

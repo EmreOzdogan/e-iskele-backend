@@ -141,15 +141,14 @@ public partial class CaptainService
         if (c == null)
             return Result<AdminCaptainDetailDto>.Failure("CAPTAIN_NOT_FOUND", "Kaptan bulunamadı.");
 
-        // Stored files related to captain document
-        var storedFiles = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "CaptainDocument" && f.RelatedEntityId == id.ToString() && !f.IsDeleted)
-            .ToListAsync(cancellationToken);
-
         var auditLogs = await _dbContext.AuditLogs
             .Where(a => a.ActorUserId == c.UserId || a.Description.Contains(c.Id.ToString()))
             .OrderByDescending(a => a.CreatedAt)
             .Take(10)
+            .ToListAsync(cancellationToken);
+
+        var storedFiles = await _dbContext.StoredFiles
+            .Where(f => f.RelatedEntityType == "CaptainDocument" && f.RelatedEntityId == id.ToString() && !f.IsDeleted && f.Status != "rejected")
             .ToListAsync(cancellationToken);
 
         var detail = new AdminCaptainDetailDto
@@ -317,8 +316,8 @@ public partial class CaptainService
         var audit = new EIskele.Domain.Entities.AuditLog
         {
             Action = "ApproveDocument",
-            EntityType = "CaptainDocument",
-            EntityId = $"{doc.OwnerUserId}_{doc.FileType}",
+            EntityType = $"CaptainDocument_{doc.FileType}",
+            EntityId = doc.OwnerUserId.ToString(),
             Description = "Belge onaylandı."
         };
         _dbContext.AuditLogs.Add(audit);
@@ -333,15 +332,11 @@ public partial class CaptainService
         if (doc == null)
             return Result.Failure("DOCUMENT_NOT_FOUND", "Belge bulunamadı.");
 
-        doc.Status = "rejected";
-        doc.IsDeleted = true;
-        doc.DeletedAt = DateTime.UtcNow;
-
         var audit = new EIskele.Domain.Entities.AuditLog
         {
             Action = "RejectDocument",
-            EntityType = "CaptainDocument",
-            EntityId = $"{doc.OwnerUserId}_{doc.FileType}",
+            EntityType = $"CaptainDocument_{doc.FileType}",
+            EntityId = doc.OwnerUserId.ToString(),
             Description = reason
         };
         _dbContext.AuditLogs.Add(audit);
@@ -351,6 +346,14 @@ public partial class CaptainService
         {
             await _fileStorageService.DeleteAsync(doc.StoragePath, cancellationToken);
         }
+
+        // Instead of hard deleting, we mark it as rejected so the Captain panel timeline can still show it,
+        // but it will be filtered out from Admin lists.
+        doc.Status = "rejected";
+        doc.StoragePath = string.Empty;
+        doc.PublicUrl = string.Empty;
+        doc.SizeInBytes = 0;
+        doc.OriginalFileName = "SİLİNMİŞ DOSYA";
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

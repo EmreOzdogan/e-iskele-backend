@@ -14,6 +14,12 @@ public class Boat : SoftDeletableEntity
     public int Capacity { get; set; }
     public BoatStatus Status { get; set; } = BoatStatus.Draft;
     
+    public string BoatType { get; set; } = string.Empty;
+    public string BrandModel { get; set; } = string.Empty;
+    public string ProductionYear { get; set; } = string.Empty;
+    public string Length { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    
     // Navigation
     public Captain Captain { get; set; } = null!;
     public Location Location { get; set; } = null!;

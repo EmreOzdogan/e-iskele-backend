@@ -432,7 +432,9 @@ public class LocationService : ILocationService
             .Select(x => new ActiveLocationDto
             {
                 Id = x.Id,
-                Name = x.Name
+                Name = x.Name,
+                Type = x.Type.ToString(),
+                ParentLocationId = x.ParentLocationId
             })
             .ToListAsync(cancellationToken);
 
