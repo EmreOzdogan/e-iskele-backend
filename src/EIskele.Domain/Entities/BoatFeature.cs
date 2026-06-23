@@ -1,5 +1,6 @@
 using System;
 using EIskele.Domain.Common;
+using EIskele.Domain.Enums;
 
 namespace EIskele.Domain.Entities;
 
@@ -16,8 +17,7 @@ public class BoatFeature : BaseEntity
     // Is it available according to the captain?
     public bool IsAvailable { get; set; }
     
-    // Admin review status: "Kontrol Bekliyor", "Uygun", "Eksik", "Riskli"
-    public string Status { get; set; } = "Kontrol Bekliyor";
+    public BoatFeatureStatus Status { get; set; } = BoatFeatureStatus.PendingReview;
     
     public Boat Boat { get; set; } = null!;
 }

@@ -26,14 +26,5 @@ public interface ILocationService
     Task<Result> MarkLocationPopularAsync(Guid id, string? note, int? order, Guid currentUserId, CancellationToken cancellationToken);
     Task<Result> UnmarkLocationPopularAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken);
 
-    Task<Result<List<LocationHarborListItemDto>>> GetLocationHarborsAsync(Guid locationId, CancellationToken cancellationToken);
-
-    Task<Result<Guid>> CreateHarborAsync(CreateHarborDto dto, Guid currentUserId, CancellationToken cancellationToken);
-
-    Task<Result> UpdateHarborAsync(UpdateHarborDto dto, Guid currentUserId, CancellationToken cancellationToken);
-
-    Task<Result> DeleteHarborAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken);
-
     Task<Result<List<ActiveLocationDto>>> GetActiveLocationsAsync(CancellationToken cancellationToken);
-    Task<Result<List<ActiveHarborDto>>> GetActiveHarborsAsync(CancellationToken cancellationToken);
 }

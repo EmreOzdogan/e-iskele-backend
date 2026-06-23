@@ -12,7 +12,7 @@ public class PackageIncludeConfiguration : IEntityTypeConfiguration<PackageInclu
 
         builder.Property(x => x.Name).IsRequired().HasMaxLength(100);
         builder.Property(x => x.Description).HasMaxLength(500);
-        builder.Property(x => x.Status).HasMaxLength(50);
+        builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(50);
 
         builder.HasOne(x => x.TourPackage)
             .WithMany(x => x.Includes)

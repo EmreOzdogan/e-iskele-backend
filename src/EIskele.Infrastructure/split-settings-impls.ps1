@@ -1,3 +1,7 @@
+$infraSettingsDir = "C:\Users\Ozem\Desktop\Projeler\e-iskele Projesi\eiskele\backend\src\EIskele.Infrastructure\Settings"
+
+# 1. SystemSettingsProvider
+$providerImpl = @"
 using System;
 using System.ComponentModel;
 using System.Threading;
@@ -5,26 +9,16 @@ using System.Threading.Tasks;
 using EIskele.Application.Common.Settings;
 using EIskele.Persistence;
 using Microsoft.EntityFrameworkCore;
-using MailKit.Net.Smtp;
-using MailKit.Security;
-using Microsoft.Identity.Client;
-using MimeKit;
+
 namespace EIskele.Infrastructure.Settings;
 
-public class SettingsService : ISettingsService
+public class SystemSettingsProvider : ISystemSettingsProvider
 {
     private readonly EIskeleDbContext _dbContext;
-    private readonly EIskele.Infrastructure.Emails.Services.IEmailTemplateRenderer _emailTemplateRenderer;
-    private readonly EIskele.Infrastructure.Emails.Services.IEmailSender _emailSender;
 
-    public SettingsService(
-        EIskeleDbContext dbContext,
-        EIskele.Infrastructure.Emails.Services.IEmailTemplateRenderer emailTemplateRenderer,
-        EIskele.Infrastructure.Emails.Services.IEmailSender emailSender)
+    public SystemSettingsProvider(EIskeleDbContext dbContext)
     {
         _dbContext = dbContext;
-        _emailTemplateRenderer = emailTemplateRenderer;
-        _emailSender = emailSender;
     }
 
     public async Task<string> GetSettingValueAsync(string key, string defaultValue = "", CancellationToken cancellationToken = default)
@@ -41,9 +35,7 @@ public class SettingsService : ISettingsService
         var stringValue = await GetSettingValueAsync(key, string.Empty, cancellationToken);
 
         if (string.IsNullOrEmpty(stringValue))
-        {
             return defaultValue;
-        }
 
         try
         {
@@ -70,11 +62,36 @@ public class SettingsService : ISettingsService
 
         return feature?.IsEnabled ?? defaultValue;
     }
+}
+"@
+Set-Content -Path "$infraSettingsDir\SystemSettingsProvider.cs" -Value $providerImpl -Encoding UTF8
 
-    public async Task<EIskele.Application.Common.Results.Result<SystemSettingsDto>> GetGeneralSettingsAsync(CancellationToken cancellationToken = default)
+# 2. GeneralSettingsService
+$generalImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class GeneralSettingsService : IGeneralSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public GeneralSettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async Task<Result<SystemSettingsDto>> GetGeneralSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
-        
         string GetValue(string key, string def) => settings.FirstOrDefault(s => s.Key == key)?.Value ?? def;
 
         var dto = new SystemSettingsDto
@@ -93,14 +110,14 @@ public class SettingsService : ISettingsService
             SupportPhone = GetValue("General.SupportPhone", "")
         };
 
-        return EIskele.Application.Common.Results.Result<SystemSettingsDto>.Success(dto);
+        return Result<SystemSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateGeneralSettingsAsync(SystemSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateGeneralSettingsAsync(SystemSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
-        void UpdateValue(string key, string? value)
+        void UpdateValue(string key, string value)
         {
             var setting = settings.FirstOrDefault(s => s.Key == key);
             if (setting == null)
@@ -111,7 +128,7 @@ public class SettingsService : ISettingsService
                     {
                         Key = key,
                         Value = value,
-                        ValueType = "String",
+                        ValueType = SystemSettingValueType.String,
                         Group = "General",
                         Description = "",
                         IsEditable = true,
@@ -146,10 +163,36 @@ public class SettingsService : ISettingsService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
+    }
+}
+"@
+Set-Content -Path "$infraSettingsDir\GeneralSettingsService.cs" -Value $generalImpl -Encoding UTF8
+
+# 3. ReservationRulesSettingsService
+$reservationImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class ReservationRulesSettingsService : IReservationRulesSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public ReservationRulesSettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
     }
 
-    public async Task<EIskele.Application.Common.Results.Result<ReservationRulesSettingsDto>> GetReservationRulesSettingsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<ReservationRulesSettingsDto>> GetReservationRulesSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -169,10 +212,10 @@ public class SettingsService : ISettingsService
             PreventOverlappingReservations = GetValueBool("Reservation.PreventOverlappingReservations", true)
         };
 
-        return EIskele.Application.Common.Results.Result<ReservationRulesSettingsDto>.Success(dto);
+        return Result<ReservationRulesSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateReservationRulesSettingsAsync(ReservationRulesSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateReservationRulesSettingsAsync(ReservationRulesSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -185,7 +228,7 @@ public class SettingsService : ISettingsService
                 {
                     Key = key,
                     Value = value,
-                    ValueType = valueType,
+                    ValueType = Enum.Parse<SystemSettingValueType>(valueType, true),
                     Group = "ReservationRules",
                     Description = "",
                     IsEditable = true,
@@ -193,14 +236,11 @@ public class SettingsService : ISettingsService
                     CreatedBy = currentUserId
                 });
             }
-            else
+            else if (setting.Value != value)
             {
-                if (setting.Value != value)
-                {
-                    setting.Value = value;
-                    setting.UpdatedAt = DateTime.UtcNow;
-                    setting.UpdatedBy = currentUserId;
-                }
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+                setting.UpdatedBy = currentUserId;
             }
         }
 
@@ -215,10 +255,36 @@ public class SettingsService : ISettingsService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
+    }
+}
+"@
+Set-Content -Path "$infraSettingsDir\ReservationRulesSettingsService.cs" -Value $reservationImpl -Encoding UTF8
+
+# 4. CommissionFinanceSettingsService
+$financeImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class CommissionFinanceSettingsService : ICommissionFinanceSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public CommissionFinanceSettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
     }
 
-    public async Task<EIskele.Application.Common.Results.Result<CommissionFinanceSettingsDto>> GetCommissionFinanceSettingsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<CommissionFinanceSettingsDto>> GetCommissionFinanceSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -239,10 +305,10 @@ public class SettingsService : ISettingsService
             CaptainPayoutPeriod = GetValueStr("Finance.CaptainPayoutPeriod", "weekly")
         };
 
-        return EIskele.Application.Common.Results.Result<CommissionFinanceSettingsDto>.Success(dto);
+        return Result<CommissionFinanceSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateCommissionFinanceSettingsAsync(CommissionFinanceSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateCommissionFinanceSettingsAsync(CommissionFinanceSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -255,7 +321,7 @@ public class SettingsService : ISettingsService
                 {
                     Key = key,
                     Value = value,
-                    ValueType = valueType,
+                    ValueType = Enum.Parse<SystemSettingValueType>(valueType, true),
                     Group = "CommissionFinance",
                     Description = "",
                     IsEditable = true,
@@ -263,14 +329,11 @@ public class SettingsService : ISettingsService
                     CreatedBy = currentUserId
                 });
             }
-            else
+            else if (setting.Value != value)
             {
-                if (setting.Value != value)
-                {
-                    setting.Value = value;
-                    setting.UpdatedAt = DateTime.UtcNow;
-                    setting.UpdatedBy = currentUserId;
-                }
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+                setting.UpdatedBy = currentUserId;
             }
         }
 
@@ -286,9 +349,46 @@ public class SettingsService : ISettingsService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
     }
-    public async Task<EIskele.Application.Common.Results.Result<SmtpEmailSettingsDto>> GetSmtpEmailSettingsAsync(CancellationToken cancellationToken = default)
+}
+"@
+Set-Content -Path "$infraSettingsDir\CommissionFinanceSettingsService.cs" -Value $financeImpl -Encoding UTF8
+
+# 5. SmtpEmailSettingsService
+$emailImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using Microsoft.Identity.Client;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class SmtpEmailSettingsService : ISmtpEmailSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+    private readonly EIskele.Infrastructure.Emails.Services.IEmailTemplateRenderer _emailTemplateRenderer;
+    private readonly EIskele.Infrastructure.Emails.Services.IEmailSender _emailSender;
+
+    public SmtpEmailSettingsService(
+        EIskeleDbContext dbContext,
+        EIskele.Infrastructure.Emails.Services.IEmailTemplateRenderer emailTemplateRenderer,
+        EIskele.Infrastructure.Emails.Services.IEmailSender emailSender)
+    {
+        _dbContext = dbContext;
+        _emailTemplateRenderer = emailTemplateRenderer;
+        _emailSender = emailSender;
+    }
+
+    public async Task<Result<SmtpEmailSettingsDto>> GetSmtpEmailSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -313,10 +413,10 @@ public class SettingsService : ISettingsService
             M365ClientSecret = GetValueStr("Smtp.M365ClientSecret", "")
         };
 
-        return EIskele.Application.Common.Results.Result<SmtpEmailSettingsDto>.Success(dto);
+        return Result<SmtpEmailSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateSmtpEmailSettingsAsync(SmtpEmailSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateSmtpEmailSettingsAsync(SmtpEmailSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -329,7 +429,7 @@ public class SettingsService : ISettingsService
                 {
                     Key = key,
                     Value = value,
-                    ValueType = valueType,
+                    ValueType = Enum.Parse<SystemSettingValueType>(valueType, true),
                     Group = "SmtpEmail",
                     Description = "",
                     IsEditable = true,
@@ -337,14 +437,11 @@ public class SettingsService : ISettingsService
                     CreatedBy = currentUserId
                 });
             }
-            else
+            else if (setting.Value != value)
             {
-                if (setting.Value != value)
-                {
-                    setting.Value = value;
-                    setting.UpdatedAt = DateTime.UtcNow;
-                    setting.UpdatedBy = currentUserId;
-                }
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+                setting.UpdatedBy = currentUserId;
             }
         }
 
@@ -364,7 +461,7 @@ public class SettingsService : ISettingsService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
     }
 
     private SecureSocketOptions GetSecureSocketOption(string securityType)
@@ -386,7 +483,7 @@ public class SettingsService : ISettingsService
         }
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> TestSmtpConnectionAsync(SmtpEmailSettingsDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result> TestSmtpConnectionAsync(SmtpEmailSettingsDto dto, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -401,28 +498,27 @@ public class SettingsService : ISettingsService
                 var authResult = await cca.AcquireTokenForClient(scopes).ExecuteAsync(cancellationToken);
                 
                 if (!string.IsNullOrEmpty(authResult.AccessToken))
-                    return EIskele.Application.Common.Results.Result.Success();
+                    return Result.Success();
                     
-                return EIskele.Application.Common.Results.Result.Failure("M365AuthError", "Microsoft 365 token alınamadı.");
+                return Result.Failure("M365AuthError", "Microsoft 365 token alınamadı.");
             }
 
             using var client = new SmtpClient();
             var secureOption = GetSecureSocketOption(dto.SmtpSecurityType);
 
             await client.ConnectAsync(dto.SmtpHost, dto.SmtpPort ?? 587, secureOption, cancellationToken);
-            
             await AuthenticateSmtpClientAsync(client, dto, cancellationToken);
-
             await client.DisconnectAsync(true, cancellationToken);
-            return EIskele.Application.Common.Results.Result.Success();
+            
+            return Result.Success();
         }
         catch (Exception ex)
         {
-            return EIskele.Application.Common.Results.Result.Failure("SmtpConnectionError", ex.Message);
+            return Result.Failure("SmtpConnectionError", ex.Message);
         }
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> SendTestEmailAsync(string email, SmtpEmailSettingsDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result> SendTestEmailAsync(string email, SmtpEmailSettingsDto dto, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -434,7 +530,7 @@ public class SettingsService : ISettingsService
 
             var htmlBody = await _emailTemplateRenderer.RenderAsync("TestEmail", model, cancellationToken);
 
-            var assembly = typeof(SettingsService).Assembly;
+            var assembly = typeof(SmtpEmailSettingsService).Assembly;
             using var logoStream = assembly.GetManifestResourceStream("EIskele.Infrastructure.Resources.e-iskele_logo.png");
             byte[]? logoBytes = null;
             if (logoStream != null)
@@ -446,15 +542,15 @@ public class SettingsService : ISettingsService
 
             await _emailSender.SendAsync(email, "e-iskele SMTP Test E-postası", htmlBody, dto, logoBytes, cancellationToken);
 
-            return EIskele.Application.Common.Results.Result.Success();
+            return Result.Success();
         }
         catch (Exception ex)
         {
-            return EIskele.Application.Common.Results.Result.Failure("SmtpSendError", ex.Message);
+            return Result.Failure("SmtpSendError", ex.Message);
         }
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> SendTestScenarioEmailAsync(string scenarioKey, string email, SmtpEmailSettingsDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result> SendTestScenarioEmailAsync(string scenarioKey, string email, SmtpEmailSettingsDto dto, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -674,10 +770,10 @@ public class SettingsService : ISettingsService
             }
             else
             {
-                return EIskele.Application.Common.Results.Result.Failure("ScenarioNotReady", "Bu senaryo için test şablonu henüz hazır değil.");
+                return Result.Failure("ScenarioNotReady", "Bu senaryo için test şablonu henüz hazır değil.");
             }
 
-            var assembly = typeof(SettingsService).Assembly;
+            var assembly = typeof(SmtpEmailSettingsService).Assembly;
             using var logoStream = assembly.GetManifestResourceStream("EIskele.Infrastructure.Resources.e-iskele_logo.png");
             byte[]? logoBytes = null;
             if (logoStream != null)
@@ -689,15 +785,42 @@ public class SettingsService : ISettingsService
 
             await _emailSender.SendAsync(email, subject, htmlBody, dto, logoBytes, cancellationToken);
 
-            return EIskele.Application.Common.Results.Result.Success();
+            return Result.Success();
         }
         catch (Exception ex)
         {
-            return EIskele.Application.Common.Results.Result.Failure("SmtpSendError", ex.Message);
+            return Result.Failure("SmtpSendError", ex.Message);
         }
     }
+}
+"@
+Set-Content -Path "$infraSettingsDir\SmtpEmailSettingsService.cs" -Value $emailImpl -Encoding UTF8
 
-    public async Task<EIskele.Application.Common.Results.Result<NotificationSettingsDto>> GetNotificationSettingsAsync(CancellationToken cancellationToken = default)
+# 6. NotificationSettingsService
+$notificationImpl = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class NotificationSettingsService : INotificationSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public NotificationSettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async Task<Result<NotificationSettingsDto>> GetNotificationSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -725,10 +848,10 @@ public class SettingsService : ISettingsService
             }
         };
 
-        return EIskele.Application.Common.Results.Result<NotificationSettingsDto>.Success(dto);
+        return Result<NotificationSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateNotificationSettingsAsync(NotificationSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateNotificationSettingsAsync(NotificationSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -741,7 +864,7 @@ public class SettingsService : ISettingsService
                 {
                     Key = key,
                     Value = value,
-                    ValueType = valueType,
+                    ValueType = Enum.Parse<SystemSettingValueType>(valueType, true),
                     Group = "Notification",
                     Description = "",
                     IsEditable = true,
@@ -749,14 +872,11 @@ public class SettingsService : ISettingsService
                     CreatedBy = currentUserId
                 });
             }
-            else
+            else if (setting.Value != value)
             {
-                if (setting.Value != value)
-                {
-                    setting.Value = value;
-                    setting.UpdatedAt = DateTime.UtcNow;
-                    setting.UpdatedBy = currentUserId;
-                }
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+                setting.UpdatedBy = currentUserId;
             }
         }
 
@@ -768,10 +888,36 @@ public class SettingsService : ISettingsService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
+    }
+}
+"@
+Set-Content -Path "$infraSettingsDir\NotificationSettingsService.cs" -Value $notificationImpl -Encoding UTF8
+
+# 7. SecuritySettingsService
+$securityImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class SecuritySettingsService : ISecuritySettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public SecuritySettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
     }
 
-    public async Task<EIskele.Application.Common.Results.Result<SecuritySettingsDto>> GetSecuritySettingsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<SecuritySettingsDto>> GetSecuritySettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -789,10 +935,10 @@ public class SettingsService : ISettingsService
             AuditLogEnabled = GetValueBool("Security.AuditLogEnabled", true)
         };
 
-        return EIskele.Application.Common.Results.Result<SecuritySettingsDto>.Success(dto);
+        return Result<SecuritySettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateSecuritySettingsAsync(SecuritySettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateSecuritySettingsAsync(SecuritySettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -805,7 +951,7 @@ public class SettingsService : ISettingsService
                 {
                     Key = key,
                     Value = value,
-                    ValueType = valueType,
+                    ValueType = valueType == "Number" ? SystemSettingValueType.Int : Enum.Parse<SystemSettingValueType>(valueType, true),
                     Group = "Security",
                     Description = "",
                     IsEditable = true,
@@ -813,14 +959,11 @@ public class SettingsService : ISettingsService
                     CreatedBy = currentUserId
                 });
             }
-            else
+            else if (setting.Value != value)
             {
-                if (setting.Value != value)
-                {
-                    setting.Value = value;
-                    setting.UpdatedAt = DateTime.UtcNow;
-                    setting.UpdatedBy = currentUserId;
-                }
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+                setting.UpdatedBy = currentUserId;
             }
         }
 
@@ -834,10 +977,36 @@ public class SettingsService : ISettingsService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
+    }
+}
+"@
+Set-Content -Path "$infraSettingsDir\SecuritySettingsService.cs" -Value $securityImpl -Encoding UTF8
+
+# 8. PaymentSettingsService
+$paymentImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class PaymentSettingsService : IPaymentSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public PaymentSettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
     }
 
-    public async Task<EIskele.Application.Common.Results.Result<PaymentSettingsDto>> GetPaymentSettingsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<PaymentSettingsDto>> GetPaymentSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -855,10 +1024,10 @@ public class SettingsService : ISettingsService
             RefundManagementEnabled = GetValueBool("Payment.RefundManagementEnabled", false)
         };
 
-        return EIskele.Application.Common.Results.Result<PaymentSettingsDto>.Success(dto);
+        return Result<PaymentSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdatePaymentSettingsAsync(PaymentSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdatePaymentSettingsAsync(PaymentSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -867,7 +1036,13 @@ public class SettingsService : ISettingsService
             var setting = settings.FirstOrDefault(s => s.Key == key);
             if (setting == null)
             {
-                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting { Key = key, Value = value, ValueType = valueType, Group = "Payment", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId });
+                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting 
+                { 
+                    Key = key, 
+                    Value = value, 
+                    ValueType = valueType == "Number" ? SystemSettingValueType.Int : Enum.Parse<SystemSettingValueType>(valueType, true), 
+                    Group = "Payment", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId 
+                });
             }
             else if (setting.Value != value)
             {
@@ -884,10 +1059,36 @@ public class SettingsService : ISettingsService
         UpdateValue("Payment.RefundManagementEnabled", dto.RefundManagementEnabled.ToString(), "Boolean");
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
+    }
+}
+"@
+Set-Content -Path "$infraSettingsDir\PaymentSettingsService.cs" -Value $paymentImpl -Encoding UTF8
+
+# 9. SmsSettingsService
+$smsImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class SmsSettingsService : ISmsSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public SmsSettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
     }
 
-    public async Task<EIskele.Application.Common.Results.Result<SmsSettingsDto>> GetSmsSettingsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<SmsSettingsDto>> GetSmsSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -901,10 +1102,10 @@ public class SettingsService : ISettingsService
             SmsSenderTitle = GetValueString("Sms.SmsSenderTitle", "EISKELE")
         };
 
-        return EIskele.Application.Common.Results.Result<SmsSettingsDto>.Success(dto);
+        return Result<SmsSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateSmsSettingsAsync(SmsSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateSmsSettingsAsync(SmsSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -913,7 +1114,10 @@ public class SettingsService : ISettingsService
             var setting = settings.FirstOrDefault(s => s.Key == key);
             if (setting == null)
             {
-                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting { Key = key, Value = value, ValueType = valueType, Group = "Sms", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId });
+                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting 
+                { 
+                    Key = key, Value = value, ValueType = valueType == "Number" ? SystemSettingValueType.Int : Enum.Parse<SystemSettingValueType>(valueType, true), Group = "Sms", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId 
+                });
             }
             else if (setting.Value != value)
             {
@@ -926,10 +1130,36 @@ public class SettingsService : ISettingsService
         UpdateValue("Sms.SmsSenderTitle", dto.SmsSenderTitle, "String");
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
+    }
+}
+"@
+Set-Content -Path "$infraSettingsDir\SmsSettingsService.cs" -Value $smsImpl -Encoding UTF8
+
+# 10. MaintenanceModeSettingsService
+$maintenanceImpl = @"
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Domain.Enums;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class MaintenanceModeSettingsService : IMaintenanceModeSettingsService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public MaintenanceModeSettingsService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
     }
 
-    public async Task<EIskele.Application.Common.Results.Result<MaintenanceModeSettingsDto>> GetMaintenanceModeSettingsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<MaintenanceModeSettingsDto>> GetMaintenanceModeSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.AsNoTracking().ToListAsync(cancellationToken);
         
@@ -946,10 +1176,10 @@ public class SettingsService : ISettingsService
             MaintenanceAffectsPublicApi = GetValueBool("Maintenance.MaintenanceAffectsPublicApi", true)
         };
 
-        return EIskele.Application.Common.Results.Result<MaintenanceModeSettingsDto>.Success(dto);
+        return Result<MaintenanceModeSettingsDto>.Success(dto);
     }
 
-    public async Task<EIskele.Application.Common.Results.Result> UpdateMaintenanceModeSettingsAsync(MaintenanceModeSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateMaintenanceModeSettingsAsync(MaintenanceModeSettingsDto dto, Guid currentUserId, CancellationToken cancellationToken = default)
     {
         var settings = await _dbContext.SystemSettings.ToListAsync(cancellationToken);
 
@@ -958,7 +1188,10 @@ public class SettingsService : ISettingsService
             var setting = settings.FirstOrDefault(s => s.Key == key);
             if (setting == null)
             {
-                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting { Key = key, Value = value, ValueType = valueType, Group = "Maintenance", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId });
+                _dbContext.SystemSettings.Add(new Domain.Entities.SystemSetting 
+                { 
+                    Key = key, Value = value, ValueType = valueType == "Number" ? SystemSettingValueType.Int : Enum.Parse<SystemSettingValueType>(valueType, true), Group = "Maintenance", Description = "", IsEditable = true, CreatedAt = DateTime.UtcNow, CreatedBy = currentUserId 
+                });
             }
             else if (setting.Value != value)
             {
@@ -974,10 +1207,35 @@ public class SettingsService : ISettingsService
         UpdateValue("Maintenance.MaintenanceAffectsPublicApi", dto.MaintenanceAffectsPublicApi.ToString(), "Boolean");
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return EIskele.Application.Common.Results.Result.Success();
+        return Result.Success();
+    }
+}
+"@
+Set-Content -Path "$infraSettingsDir\MaintenanceModeSettingsService.cs" -Value $maintenanceImpl -Encoding UTF8
+
+# 11. SettingsAuditLogService
+$auditLogImpl = @"
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using EIskele.Application.Common.Results;
+using EIskele.Application.Common.Settings;
+using EIskele.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace EIskele.Infrastructure.Settings;
+
+public class SettingsAuditLogService : ISettingsAuditLogService
+{
+    private readonly EIskeleDbContext _dbContext;
+
+    public SettingsAuditLogService(EIskeleDbContext dbContext)
+    {
+        _dbContext = dbContext;
     }
 
-    public async Task<EIskele.Application.Common.Results.Result<System.Collections.Generic.List<SettingsAuditLogDto>>> GetSettingsAuditLogsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<List<SettingsAuditLogDto>>> GetSettingsAuditLogsAsync(CancellationToken cancellationToken = default)
     {
         var logs = await _dbContext.AuditLogs
             .AsNoTracking()
@@ -988,7 +1246,7 @@ public class SettingsService : ISettingsService
             {
                 Id = a.Id.ToString(),
                 Action = a.Action,
-                SettingGroup = "System Settings", // Bu değer log verilerinden daha da detaylandırılabilir
+                SettingGroup = "System Settings",
                 OldValue = a.OldValue ?? "",
                 NewValue = a.NewValue ?? "",
                 ActorName = a.ActorUserId.ToString() ?? "",
@@ -998,6 +1256,8 @@ public class SettingsService : ISettingsService
             })
             .ToListAsync(cancellationToken);
 
-        return EIskele.Application.Common.Results.Result<System.Collections.Generic.List<SettingsAuditLogDto>>.Success(logs);
+        return Result<List<SettingsAuditLogDto>>.Success(logs);
     }
 }
+"@
+Set-Content -Path "$infraSettingsDir\SettingsAuditLogService.cs" -Value $auditLogImpl -Encoding UTF8

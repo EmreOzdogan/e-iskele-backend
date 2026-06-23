@@ -15,16 +15,19 @@ namespace EIskele.Infrastructure.Services;
 public partial class ReservationService : IReservationService
 {
     private readonly EIskeleDbContext _dbContext;
-    private readonly EIskele.Application.Common.Settings.ISettingsService _settingsService;
+    private readonly EIskele.Application.Common.Settings.IReservationRulesSettingsService _reservationRulesSettingsService;
+    private readonly EIskele.Application.Common.Settings.ISmtpEmailSettingsService _smtpEmailSettingsService;
     private readonly EIskele.Infrastructure.Emails.Services.IEmailSender _emailSender;
 
     public ReservationService(
         EIskeleDbContext dbContext,
-        EIskele.Application.Common.Settings.ISettingsService settingsService,
+        EIskele.Application.Common.Settings.IReservationRulesSettingsService reservationRulesSettingsService,
+        EIskele.Application.Common.Settings.ISmtpEmailSettingsService smtpEmailSettingsService,
         EIskele.Infrastructure.Emails.Services.IEmailSender emailSender)
     {
         _dbContext = dbContext;
-        _settingsService = settingsService;
+        _reservationRulesSettingsService = reservationRulesSettingsService;
+        _smtpEmailSettingsService = smtpEmailSettingsService;
         _emailSender = emailSender;
     }
 

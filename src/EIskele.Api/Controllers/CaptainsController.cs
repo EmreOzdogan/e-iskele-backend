@@ -22,8 +22,7 @@ public class CaptainsController : BaseController
     [AllowAnonymous]
     public async Task<IActionResult> Apply([FromBody] CaptainApplicationRequest request, CancellationToken cancellationToken)
     {
-        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        Guid.TryParse(userIdString, out var userId); // Defaults to Guid.Empty if not logged in
+        var userId = this.UserId;
 
         var result = await _captainService.ApplyAsync(userId, request, cancellationToken);
         return HandleResult(result);

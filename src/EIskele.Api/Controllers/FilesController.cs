@@ -1,5 +1,4 @@
 using System;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using EIskele.Application.Common.Files;
@@ -14,12 +13,12 @@ namespace EIskele.Api.Controllers;
 public class FilesController : BaseController
 {
     private readonly IFileStorageService _fileStorageService;
-    private readonly EIskele.Persistence.EIskeleDbContext _dbContext;
+    private readonly IStoredFileService _storedFileService;
 
-    public FilesController(IFileStorageService fileStorageService, EIskele.Persistence.EIskeleDbContext dbContext)
+    public FilesController(IFileStorageService fileStorageService, IStoredFileService storedFileService)
     {
         _fileStorageService = fileStorageService;
-        _dbContext = dbContext;
+        _storedFileService = storedFileService;
     }
 
     [HttpPost("upload")]
@@ -31,15 +30,12 @@ public class FilesController : BaseController
             return BadRequest(ApiResponse.CreateFailure("INVALID_FILE", "Dosya seçilmedi veya boş."));
         }
 
-        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        Guid.TryParse(userIdString, out var userId); // Defaults to Guid.Empty if not logged in
-
         var request = new FileUploadRequest
         {
             Content = file.OpenReadStream(),
             OriginalFileName = file.FileName,
             ContentType = file.ContentType,
-            OwnerUserId = userId,
+            OwnerUserId = this.UserId,
             RelatedEntityType = "CaptainApplication", // Varsayılan olarak başvuru diyelim, isterseniz parametre alabiliriz
             RelatedEntityId = string.Empty, // Başvuru ID'si henüz oluşmadığı için boş kalabilir
             FileType = fileType,
@@ -52,8 +48,6 @@ public class FilesController : BaseController
             return BadRequest(ApiResponse.CreateFailure("UPLOAD_FAILED", "Dosya yüklenirken bir hata oluştu."));
         }
 
-        // Upload başarılıysa ApiResponse ile dönüyoruz
-        // result.StoredFileName is the unique ID created by LocalFileStorageService, we can use it to fetch the file later.
         return Ok(ApiResponse<FileUploadResult>.CreateSuccess(result));
     }
 
@@ -61,28 +55,15 @@ public class FilesController : BaseController
     [AllowAnonymous]
     public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken = default)
     {
-        var file = await _dbContext.Set<EIskele.Domain.Entities.StoredFile>().FindAsync(new object[] { id }, cancellationToken);
-        if (file == null || file.IsDeleted)
+        var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+        var fileResult = await _storedFileService.GetFileRecordAsync(id, this.UserId, isAdmin, cancellationToken);
+
+        if (!fileResult.IsSuccess)
         {
-            return NotFound(ApiResponse.CreateFailure("FILE_NOT_FOUND", "Dosya bulunamadı veya silinmiş."));
+            return HandleResult(fileResult);
         }
 
-        if (!file.IsPublic)
-        {
-            if (!User.Identity?.IsAuthenticated ?? true)
-            {
-                return Unauthorized(ApiResponse.CreateFailure("UNAUTHORIZED", "Bu dosyayı görüntülemek için giriş yapmalısınız."));
-            }
-
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            Guid.TryParse(userIdString, out var userId);
-
-            var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
-            if (!isAdmin && file.OwnerUserId != userId)
-            {
-                return StatusCode(403, ApiResponse.CreateFailure("FORBIDDEN", "Bu dosyayı görüntüleme yetkiniz yok."));
-            }
-        }
+        var file = fileResult.Value;
 
         if (string.IsNullOrEmpty(file.StoragePath))
         {
@@ -97,13 +78,7 @@ public class FilesController : BaseController
                 return NotFound(ApiResponse.CreateFailure("FILE_MISSING", "Dosya sunucuda bulunamadı."));
             }
 
-            // MimeType'ı yoksa fallback olarak application/octet-stream verelim
             var mimeType = !string.IsNullOrEmpty(file.MimeType) ? file.MimeType : "application/octet-stream";
-            
-            // PDF veya görseller tarayıcıda açılsın, diğerleri direkt insin istiyorsanız Content-Disposition ayarlayabilirsiniz:
-            // Fakat ASP.NET Core 'File' metodu OriginalFileName verilirse otomatik attachment (indirme) yapar. 
-            // Biz önizleme yapacağımız için fileName parametresini vermiyoruz (inline göstermek için).
-            
             return File(stream, mimeType);
         }
         catch (System.Exception ex)

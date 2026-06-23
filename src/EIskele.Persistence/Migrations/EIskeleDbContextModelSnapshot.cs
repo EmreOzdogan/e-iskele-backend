@@ -40,7 +40,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
@@ -280,6 +281,9 @@ namespace EIskele.Persistence.Migrations
                     b.Property<Guid>("BoatId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("BoatId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int?>("Capacity")
                         .HasColumnType("int");
 
@@ -293,14 +297,16 @@ namespace EIskele.Persistence.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Reason")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("StartDateTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<Guid?>("TourPackageId")
                         .HasColumnType("uniqueidentifier");
@@ -313,9 +319,11 @@ namespace EIskele.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BoatId");
+                    b.HasIndex("BoatId1");
 
                     b.HasIndex("TourPackageId");
+
+                    b.HasIndex("BoatId", "StartDateTime", "EndDateTime");
 
                     b.ToTable("AvailabilitySlots");
                 });
@@ -455,7 +463,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("AccountStatus")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Address")
                         .IsRequired()
@@ -470,7 +479,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("ApplicationType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Bio")
                         .IsRequired()
@@ -511,7 +521,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -538,18 +549,21 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("AuthorizedPersonName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid>("CaptainId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -564,18 +578,21 @@ namespace EIskele.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Iban")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("TaxNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("TaxOffice")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1043,18 +1060,21 @@ namespace EIskele.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("IbanMasked")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("PaidDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PayoutNo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("RelatedReservationCount")
                         .HasColumnType("int");
@@ -1073,7 +1093,10 @@ namespace EIskele.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CaptainId");
+                    b.HasIndex("PayoutNo")
+                        .IsUnique();
+
+                    b.HasIndex("CaptainId", "Status");
 
                     b.ToTable("Payouts");
                 });
@@ -1264,7 +1287,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("ReplyText")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<Guid>("ReviewId")
                         .HasColumnType("uniqueidentifier");
@@ -1290,7 +1314,8 @@ namespace EIskele.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AdminNote")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1302,11 +1327,13 @@ namespace EIskele.Persistence.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Reason")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid>("ReviewId")
                         .HasColumnType("uniqueidentifier");
@@ -1680,11 +1707,13 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Device")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("IpAddress")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<bool>("IsCurrent")
                         .HasColumnType("bit");
@@ -1694,7 +1723,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Location")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1755,7 +1785,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("AgreementName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1765,7 +1796,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1778,7 +1810,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Version")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 
@@ -1795,7 +1828,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Category")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1826,7 +1860,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "Category")
+                        .IsUnique();
 
                     b.ToTable("UserNotificationPreferences");
                 });
@@ -1845,15 +1880,18 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("IpAddress")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1863,7 +1901,8 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<string>("UserAgent")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -1981,14 +2020,19 @@ namespace EIskele.Persistence.Migrations
             modelBuilder.Entity("EIskele.Domain.Entities.AvailabilitySlot", b =>
                 {
                     b.HasOne("EIskele.Domain.Entities.Boat", "Boat")
-                        .WithMany("AvailabilitySlots")
+                        .WithMany()
                         .HasForeignKey("BoatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EIskele.Domain.Entities.Boat", null)
+                        .WithMany("AvailabilitySlots")
+                        .HasForeignKey("BoatId1");
+
                     b.HasOne("EIskele.Domain.Entities.TourPackage", "TourPackage")
                         .WithMany()
-                        .HasForeignKey("TourPackageId");
+                        .HasForeignKey("TourPackageId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Boat");
 
@@ -2102,7 +2146,7 @@ namespace EIskele.Persistence.Migrations
                     b.HasOne("EIskele.Domain.Entities.Captain", "Captain")
                         .WithMany()
                         .HasForeignKey("CaptainId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Captain");

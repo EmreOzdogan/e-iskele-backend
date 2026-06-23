@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EIskele.Application.Common.Files;
 using EIskele.Domain.Entities;
+using EIskele.Domain.Enums;
 using EIskele.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -50,7 +51,7 @@ public class LocalFileStorageService : IFileStorageService
             OwnerUserId = request.OwnerUserId,
             RelatedEntityType = request.RelatedEntityType,
             RelatedEntityId = request.RelatedEntityId,
-            FileType = request.FileType,
+            FileType = Enum.Parse<StoredFileType>(request.FileType, true),
             OriginalFileName = request.OriginalFileName,
             StoredFileName = uniqueFileName,
             MimeType = request.ContentType,
@@ -60,7 +61,7 @@ public class LocalFileStorageService : IFileStorageService
             StoragePath = filePath,
             PublicUrl = $"/uploads/{uniqueFileName}",
             IsPublic = request.IsPublic,
-            Status = "Active",
+            Status = StoredFileStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
 

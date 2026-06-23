@@ -17,11 +17,11 @@ public abstract class BaseController : ControllerBase
         }
     }
 
-    protected IActionResult HandleResult(Result result)
+    protected IActionResult HandleResult(Result result, string? successMessage = null)
     {
         if (result.IsSuccess)
         {
-            return Ok(ApiResponse.CreateSuccess());
+            return Ok(successMessage == null ? ApiResponse.CreateSuccess() : ApiResponse.CreateSuccess(successMessage));
         }
 
         return result.Error.Code switch
@@ -34,11 +34,11 @@ public abstract class BaseController : ControllerBase
         };
     }
 
-    protected IActionResult HandleResult<T>(Result<T> result)
+    protected IActionResult HandleResult<T>(Result<T> result, string? successMessage = null)
     {
         if (result.IsSuccess)
         {
-            return Ok(ApiResponse<T>.CreateSuccess(result.Value));
+            return Ok(successMessage == null ? ApiResponse<T>.CreateSuccess(result.Value) : ApiResponse<T>.CreateSuccess(result.Value, successMessage));
         }
 
         return result.Error.Code switch

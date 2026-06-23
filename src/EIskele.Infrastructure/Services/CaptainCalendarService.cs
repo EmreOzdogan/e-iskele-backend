@@ -56,8 +56,8 @@ public class CaptainCalendarService : ICaptainCalendarService
         {
             AvailableDaysThisMonth = 30, // Simplified for MVP. Actually we should count unblocked days.
             BookedDaysThisMonth = reservations.Count(r => r.Status == ReservationStatus.Approved || r.Status == ReservationStatus.Paid || r.Status == ReservationStatus.Completed),
-            ClosedDays = slots.Count(s => s.Status == "Closed"),
-            MaintenanceDays = slots.Count(s => s.Status == "Maintenance"),
+            ClosedDays = slots.Count(s => s.Status == AvailabilitySlotStatus.Closed),
+            MaintenanceDays = slots.Count(s => s.Status == AvailabilitySlotStatus.Maintenance),
             PendingReservations = reservations.Count(r => r.Status == ReservationStatus.Pending || r.Status == ReservationStatus.WaitingCaptainApproval),
             LastUpdatedAt = DateTime.UtcNow.ToString("O")
         };
@@ -111,7 +111,7 @@ public class CaptainCalendarService : ICaptainCalendarService
                 Date = slot.StartDateTime.ToString("yyyy-MM-dd"),
                 StartTime = slot.StartDateTime.ToString("HH:mm"),
                 EndTime = slot.EndDateTime.ToString("HH:mm"),
-                Status = slot.Status.ToLower(), // closed, maintenance, etc.
+                Status = slot.Status.ToString().ToLower(), // closed, maintenance, etc.
                 Capacity = slot.Capacity ?? slot.Boat.Capacity,
                 RemainingCapacity = slot.Capacity ?? slot.Boat.Capacity, // In real scenario, subtract active reservations
                 Note = slot.Reason,
@@ -188,7 +188,7 @@ public class CaptainCalendarService : ICaptainCalendarService
             TourPackageId = request.PackageId,
             StartDateTime = startDateTime,
             EndDateTime = endDateTime,
-            Status = "Closed", // Default or determine from note/type
+            Status = AvailabilitySlotStatus.Closed, // Default or determine from note/type
             Reason = request.Note,
             Capacity = request.Capacity
         };

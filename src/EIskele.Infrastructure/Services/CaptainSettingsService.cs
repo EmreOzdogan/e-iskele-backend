@@ -45,9 +45,9 @@ public class CaptainSettingsService : ICaptainSettingsService
                 EmailVerified = user.EmailConfirmed,
                 Phone = user.PhoneNumber ?? string.Empty,
                 PhoneVerified = user.PhoneNumberConfirmed,
-                AccountType = captain.ApplicationType?.ToLower() ?? "individual",
-                VerificationStatus = captain.Status == "UnderReview" ? "pendingReview" : captain.Status == "MissingDocument" ? "missingInfo" : captain.Status == "Approved" ? "verified" : "notStarted",
-                DocumentStatusText = captain.Status == "Approved" ? "Tamamlandı" : "Eksik / Bekliyor",
+                AccountType = captain.ApplicationType.ToString().ToLower(),
+                VerificationStatus = captain.Status == EIskele.Domain.Enums.CaptainStatus.UnderReview ? "pendingReview" : captain.Status == EIskele.Domain.Enums.CaptainStatus.MissingDocument ? "missingInfo" : captain.Status == EIskele.Domain.Enums.CaptainStatus.Approved ? "verified" : "notStarted",
+                DocumentStatusText = captain.Status == EIskele.Domain.Enums.CaptainStatus.Approved ? "Tamamlandı" : "Eksik / Bekliyor",
                 PaymentStatusText = string.IsNullOrEmpty(captain.Iban) ? "Eklenmedi" : "Doğrulandı",
                 LastUpdatedText = captain.UpdatedAt?.ToString("dd MMM yyyy") ?? string.Empty
             },
@@ -62,12 +62,12 @@ public class CaptainSettingsService : ICaptainSettingsService
             },
             Application = new CaptainApplicationDto
             {
-                Status = captain.Status ?? "Unknown",
+                Status = captain.Status.ToString(),
                 SubmittedAt = user.CreatedAt.ToString("o"),
                 DocumentStatus = "Approved", // Simplified
                 VerificationLevel = "Pro",
-                AccountType = captain.ApplicationType?.ToLower() ?? "individual",
-                ReviewStatus = captain.Status == "UnderReview" ? "pendingReview" : captain.Status == "MissingDocument" ? "missingInfo" : captain.Status == "Approved" ? "verified" : "notStarted"
+                AccountType = captain.ApplicationType.ToString().ToLower(),
+                ReviewStatus = captain.Status == EIskele.Domain.Enums.CaptainStatus.UnderReview ? "pendingReview" : captain.Status == EIskele.Domain.Enums.CaptainStatus.MissingDocument ? "missingInfo" : captain.Status == EIskele.Domain.Enums.CaptainStatus.Approved ? "verified" : "notStarted"
             },
             Payment = new CaptainPaymentDto
             {
@@ -129,7 +129,7 @@ public class CaptainSettingsService : ICaptainSettingsService
                 Items = new List<VerificationSummaryItemDto>
                 {
                     new VerificationSummaryItemDto { Key = "profile", Label = "Profil Bilgileri", Status = "completed", ActionPath = "?tab=profil" },
-                    new VerificationSummaryItemDto { Key = "documents", Label = "Resmi Belgeler", Status = captain.Status == "Approved" ? "completed" : "missing", ActionPath = "/belgeler" },
+                    new VerificationSummaryItemDto { Key = "documents", Label = "Resmi Belgeler", Status = captain.Status == EIskele.Domain.Enums.CaptainStatus.Approved ? "completed" : "missing", ActionPath = "/belgeler" },
                     new VerificationSummaryItemDto { Key = "payment", Label = "Ödeme Bilgileri", Status = string.IsNullOrEmpty(captain.Iban) ? "missing" : "completed", ActionPath = "?tab=odeme" }
                 }
             }

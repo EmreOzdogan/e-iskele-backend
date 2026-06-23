@@ -1,4 +1,5 @@
 using EIskele.Domain.Common;
+using EIskele.Domain.Enums;
 
 namespace EIskele.Domain.Entities;
 
@@ -8,7 +9,7 @@ public class PackageInclude : BaseEntity
     public string Name { get; set; } = string.Empty;
     public bool IsIncluded { get; set; }
     public string? Description { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public PackageIncludeStatus Status { get; set; } = PackageIncludeStatus.Active;
 
     // Navigation
     public TourPackage TourPackage { get; set; } = null!;

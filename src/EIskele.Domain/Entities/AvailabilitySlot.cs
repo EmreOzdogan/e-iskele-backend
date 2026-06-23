@@ -1,4 +1,5 @@
 using EIskele.Domain.Common;
+using EIskele.Domain.Enums;
 
 namespace EIskele.Domain.Entities;
 
@@ -7,7 +8,7 @@ public class AvailabilitySlot : BaseEntity
     public Guid BoatId { get; set; }
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
-    public string Status { get; set; } = "Available"; // Available, Booked, Closed, Maintenance
+    public AvailabilitySlotStatus Status { get; set; } = AvailabilitySlotStatus.Available;
     public string? Reason { get; set; }
 
     // Navigation

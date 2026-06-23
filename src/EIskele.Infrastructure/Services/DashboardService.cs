@@ -28,7 +28,7 @@ public class DashboardService : IDashboardService
         var captainsCount = await _context.Captains.CountAsync(cancellationToken);
         var boatsCount = await _context.Boats.CountAsync(cancellationToken);
         var activeBoatsCount = await _context.Boats.CountAsync(b => b.Status == BoatStatus.Published, cancellationToken);
-        var pendingCaptainsCount = await _context.Captains.CountAsync(a => a.Status == "UnderReview", cancellationToken);
+        var pendingCaptainsCount = await _context.Captains.CountAsync(a => a.Status == CaptainStatus.UnderReview, cancellationToken);
         var pendingBoatsCount = await _context.Boats.CountAsync(b => b.Status == BoatStatus.UnderReview, cancellationToken);
         
         var today = DateTime.UtcNow.Date;

@@ -7,6 +7,7 @@ using EIskele.Application.Captains;
 using EIskele.Application.Common.Files;
 using EIskele.Application.Common.Results;
 using EIskele.Domain.Entities;
+using EIskele.Domain.Enums;
 using EIskele.Persistence;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
@@ -50,14 +51,14 @@ public class CaptainDocumentsService : ICaptainDocumentsService
         foreach (var expectedDoc in expectedDocs)
         {
             var matchedFile = storedFiles.OrderByDescending(x => x.CreatedAt)
-                                         .FirstOrDefault(f => f.FileType == expectedDoc.Id);
+                                         .FirstOrDefault(f => f.FileType.ToString() == expectedDoc.Id);
 
             var fileLogs = auditLogs.Where(a => a.EntityType == $"CaptainDocument_{expectedDoc.Id}" && a.EntityId == userId.ToString()).OrderBy(a => a.CreatedAt).ToList();
             var lastReject = fileLogs.LastOrDefault(a => a.Action == "RejectDocument");
 
             if (matchedFile != null)
             {
-                expectedDoc.Status = string.IsNullOrEmpty(matchedFile.Status) ? "uploaded" : matchedFile.Status; 
+                expectedDoc.Status = char.ToLowerInvariant(matchedFile.Status.ToString()[0]) + matchedFile.Status.ToString().Substring(1); 
                 expectedDoc.FileName = matchedFile.OriginalFileName;
                 expectedDoc.UploadedAtText = matchedFile.CreatedAt.ToString("dd MMMM yyyy");
 
@@ -130,16 +131,16 @@ public class CaptainDocumentsService : ICaptainDocumentsService
         }
 
         // Add any uploaded documents that are not in the "expected" list (e.g., extra documents)
-        var extraFiles = storedFiles.Where(f => !expectedDocs.Any(e => e.Id == f.FileType)).ToList();
+        var extraFiles = storedFiles.Where(f => !expectedDocs.Any(e => e.Id == f.FileType.ToString())).ToList();
         foreach (var extra in extraFiles)
         {
             documents.Add(new CaptainHubDocumentDto
             {
-                Id = extra.FileType, // e.g., "extra_doc_1"
+                Id = extra.FileType.ToString(), // e.g., "extra_doc_1"
                 Name = extra.OriginalFileName,
                 Category = "extra",
                 RequirementLevel = "optional",
-                Status = string.IsNullOrEmpty(extra.Status) ? "uploaded" : extra.Status,
+                Status = char.ToLowerInvariant(extra.Status.ToString()[0]) + extra.Status.ToString().Substring(1),
                 FileName = extra.OriginalFileName,
                 UploadedAtText = extra.CreatedAt.ToString("dd MMMM yyyy")
             });
@@ -198,7 +199,7 @@ public class CaptainDocumentsService : ICaptainDocumentsService
 
         if (newFile != null)
         {
-            newFile.Status = "pendingReview";
+            newFile.Status = StoredFileStatus.Pending;
 
             var audit = new EIskele.Domain.Entities.AuditLog
             {
@@ -242,7 +243,7 @@ public class CaptainDocumentsService : ICaptainDocumentsService
             }
         };
 
-        if (captain.ApplicationType == "Company")
+        if (captain.ApplicationType == EIskele.Domain.Enums.CaptainApplicationType.Company)
         {
             list.Add(new CaptainHubDocumentDto
             {

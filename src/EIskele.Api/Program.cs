@@ -17,7 +17,14 @@ builder.Services.AddInfrastructureServices();
 builder.Services.AddApplicationServices();
 
 // Health check endpoint (used by Docker HEALTHCHECK and Dokploy)
-builder.Services.AddHealthChecks();
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+}
+
+builder.Services.AddHealthChecks()
+    .AddSqlServer(connectionString);
 
 // CORS: allow dev origins + production origins from environment variable
 var allowedOriginsFromEnv = builder.Configuration["AllowedOrigins"]
@@ -62,6 +69,15 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(options =>
 {
     var jwtSettings = builder.Configuration.GetSection("Jwt");
+    
+    var secret = jwtSettings["Secret"];
+    var issuer = jwtSettings["Issuer"];
+    var audience = jwtSettings["Audience"];
+
+    if (string.IsNullOrWhiteSpace(secret)) throw new InvalidOperationException("Jwt:Secret is not configured.");
+    if (string.IsNullOrWhiteSpace(issuer)) throw new InvalidOperationException("Jwt:Issuer is not configured.");
+    if (string.IsNullOrWhiteSpace(audience)) throw new InvalidOperationException("Jwt:Audience is not configured.");
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,

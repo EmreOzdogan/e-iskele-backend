@@ -132,7 +132,7 @@ public partial class BoatService
                 Name = featureName,
                 Category = "Genel",
                 IsAvailable = true,
-                Status = "Kontrol Bekliyor"
+                Status = BoatFeatureStatus.PendingReview
             });
         }
 
@@ -177,7 +177,7 @@ public partial class BoatService
                 Name = featureName,
                 Category = "Genel",
                 IsAvailable = true,
-                Status = "Kontrol Bekliyor"
+                Status = BoatFeatureStatus.PendingReview
             });
         }
 

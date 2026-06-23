@@ -65,14 +65,14 @@ public partial class TourPackageService
             Harbor = package.Boat?.Harbor?.Name ?? "",
             CaptainId = package.Boat?.Captain?.Id ?? Guid.Empty,
             CaptainName = package.Boat?.Captain?.User != null ? package.Boat.Captain.User.FirstName + " " + package.Boat.Captain.User.LastName : "",
-            CaptainStatus = package.Boat?.Captain?.Status == "Approved" ? "Approved" : "Pending",
+            CaptainStatus = package.Boat?.Captain?.Status == CaptainStatus.Approved ? "Approved" : "Pending",
             Includes = package.Includes.Select(i => new PackageIncludeDto
             {
                 Id = i.Id,
                 Name = i.Name,
                 IsIncluded = i.IsIncluded,
                 Description = i.Description,
-                Status = i.Status
+                Status = i.Status.ToString()
             }).ToList(),
             RecentReservations = package.Reservations.OrderByDescending(r => r.CreatedAt).Take(5).Select(r => new PackageReservationDto
             {

@@ -1,14 +1,19 @@
+using EIskele.Application.Common.Security;
 using EIskele.Domain.Common;
 using EIskele.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using EIskele.Persistence.Extensions;
 
 namespace EIskele.Persistence;
 
 public class EIskeleDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
 {
-    public EIskeleDbContext(DbContextOptions<EIskeleDbContext> options) : base(options)
+    private readonly ICurrentUserService? _currentUserService;
+
+    public EIskeleDbContext(DbContextOptions<EIskeleDbContext> options, ICurrentUserService? currentUserService = null) : base(options)
     {
+        _currentUserService = currentUserService;
     }
 
     public DbSet<Captain> Captains => Set<Captain>();
@@ -44,19 +49,36 @@ public class EIskeleDbContext : IdentityDbContext<ApplicationUser, ApplicationRo
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(EIskeleDbContext).Assembly);
+        modelBuilder.ApplySoftDeleteQueryFilter();
+    }
+
+    public override int SaveChanges()
+    {
+        ApplyAuditLogic();
+        return base.SaveChanges();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        ApplyAuditLogic();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void ApplyAuditLogic()
+    {
+        var userId = _currentUserService?.UserId;
+
         foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {
             switch (entry.State)
             {
                 case EntityState.Added:
                     entry.Entity.CreatedAt = DateTime.UtcNow;
+                    entry.Entity.CreatedBy = userId;
                     break;
                 case EntityState.Modified:
                     entry.Entity.UpdatedAt = DateTime.UtcNow;
+                    entry.Entity.UpdatedBy = userId;
                     break;
             }
         }
@@ -69,10 +91,9 @@ public class EIskeleDbContext : IdentityDbContext<ApplicationUser, ApplicationRo
                     entry.State = EntityState.Modified;
                     entry.Entity.IsDeleted = true;
                     entry.Entity.DeletedAt = DateTime.UtcNow;
+                    entry.Entity.DeletedBy = userId;
                     break;
             }
         }
-
-        return base.SaveChangesAsync(cancellationToken);
     }
 }

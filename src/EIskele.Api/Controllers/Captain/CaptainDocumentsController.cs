@@ -24,8 +24,8 @@ public class CaptainDocumentsController : BaseController
     [HttpGet]
     public async Task<IActionResult> GetDocuments(CancellationToken cancellationToken)
     {
-        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var userId))
+        var userId = this.UserId;
+        if (userId == Guid.Empty)
             return Unauthorized(ApiResponse.CreateFailure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _documentsService.GetCaptainDocumentsAsync(userId, cancellationToken);
@@ -38,8 +38,8 @@ public class CaptainDocumentsController : BaseController
         if (file == null || file.Length == 0)
             return BadRequest(ApiResponse.CreateFailure("INVALID_FILE", "Dosya boş olamaz."));
 
-        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var userId))
+        var userId = this.UserId;
+        if (userId == Guid.Empty)
             return Unauthorized(ApiResponse.CreateFailure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _documentsService.UploadDocumentAsync(userId, documentId, file.OpenReadStream(), file.FileName, file.ContentType, request, cancellationToken);

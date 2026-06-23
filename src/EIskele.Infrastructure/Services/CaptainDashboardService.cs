@@ -59,7 +59,7 @@ public class CaptainDashboardService : ICaptainDashboardService
         {
             CaptainName = $"{captain.User.FirstName} {captain.User.LastName}",
             TodayText = DateTime.UtcNow.ToString("dd MMMM yyyy, dddd"),
-            OperationStatus = captain.Status == "Approved" ? "active" : "limited",
+            OperationStatus = captain.Status == CaptainStatus.Approved ? "active" : "limited",
             ProfileCompletionRate = string.IsNullOrEmpty(captain.Iban) ? 80 : 100
         };
 

@@ -7,6 +7,7 @@ using EIskele.Application.Captains;
 using EIskele.Application.Common.Results;
 using EIskele.Domain.Entities;
 using EIskele.Persistence;
+using EIskele.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace EIskele.Infrastructure.Services;
@@ -20,12 +21,12 @@ public partial class CaptainService
         return Result<AdminCaptainsSummaryDto>.Success(new AdminCaptainsSummaryDto
         {
             TotalCaptains = captains.Count,
-            ApprovedCaptains = captains.Count(c => c.Status == "Approved"),
-            PendingApplications = captains.Count(c => c.Status == "UnderReview"),
-            MissingDocuments = captains.Count(c => c.Status == "MissingDocument"),
-            SuspendedCaptains = captains.Count(c => c.AccountStatus == "Suspended"),
-            CompanyApplications = captains.Count(c => c.ApplicationType == "Company"),
-            IndividualApplications = captains.Count(c => c.ApplicationType == "Individual"),
+            ApprovedCaptains = captains.Count(c => c.Status == CaptainStatus.Approved),
+            PendingApplications = captains.Count(c => c.Status == CaptainStatus.UnderReview),
+            MissingDocuments = captains.Count(c => c.Status == CaptainStatus.MissingDocument),
+            SuspendedCaptains = captains.Count(c => c.AccountStatus == CaptainAccountStatus.Suspended),
+            CompanyApplications = captains.Count(c => c.ApplicationType == CaptainApplicationType.Company),
+            IndividualApplications = captains.Count(c => c.ApplicationType == CaptainApplicationType.Individual),
             NewApplicationsThisMonth = captains.Count(c => c.CreatedAt >= DateTime.UtcNow.AddMonths(-1))
         });
     }
@@ -50,23 +51,23 @@ public partial class CaptainService
         {
             var appStatus = query.ApplicationStatus.ToLower();
             if (appStatus == "inreview")
-                q = q.Where(c => c.Status == "UnderReview");
+                q = q.Where(c => c.Status == CaptainStatus.UnderReview);
             else if (appStatus == "missingdocument")
-                q = q.Where(c => c.Status == "MissingDocument");
+                q = q.Where(c => c.Status == CaptainStatus.MissingDocument);
             else if (appStatus == "suspended")
-                q = q.Where(c => c.AccountStatus == "Suspended");
+                q = q.Where(c => c.AccountStatus == CaptainAccountStatus.Suspended);
             else
-                q = q.Where(c => c.Status.ToLower() == appStatus);
+                q = q.Where(c => c.Status.ToString().ToLower() == appStatus);
         }
 
         if (!string.IsNullOrWhiteSpace(query.CaptainStatus))
         {
-            q = q.Where(c => c.AccountStatus.Equals(query.CaptainStatus, StringComparison.OrdinalIgnoreCase));
+            q = q.Where(c => c.AccountStatus.ToString().Equals(query.CaptainStatus, StringComparison.OrdinalIgnoreCase));
         }
 
         if (!string.IsNullOrWhiteSpace(query.ApplicationType))
         {
-            q = q.Where(c => c.ApplicationType.Equals(query.ApplicationType, StringComparison.OrdinalIgnoreCase));
+            q = q.Where(c => c.ApplicationType.ToString().Equals(query.ApplicationType, StringComparison.OrdinalIgnoreCase));
         }
 
         var totalCount = await q.CountAsync(cancellationToken);
@@ -80,7 +81,7 @@ public partial class CaptainService
                 Id = c.Id,
                 ApplicationNo = string.IsNullOrEmpty(c.ApplicationNo) ? $"APP-{c.Id.ToString().Substring(0,6).ToUpper()}" : c.ApplicationNo,
                 DisplayName = $"{c.User.FirstName} {c.User.LastName}",
-                ApplicationType = string.IsNullOrEmpty(c.ApplicationType) ? "individual" : c.ApplicationType.ToLower(),
+                ApplicationType = c.ApplicationType.ToString().ToLower(),
                 Email = c.User.Email ?? string.Empty,
                 Phone = c.User.PhoneNumber ?? string.Empty,
                 Location = c.Location,
@@ -88,8 +89,8 @@ public partial class CaptainService
                 TotalBoatCount = c.Boats.Count,
                 ActiveBoatCount = c.Boats.Count(b => b.Status == EIskele.Domain.Enums.BoatStatus.Published),
                 DocumentStatus = "", // Will be populated dynamically below
-                ApplicationStatus = c.Status == "UnderReview" ? "inReview" : c.Status == "MissingDocument" ? "missingDocument" : c.Status.ToLower(),
-                AccountStatus = c.AccountStatus.ToLower(),
+                ApplicationStatus = c.Status == CaptainStatus.UnderReview ? "inReview" : c.Status == CaptainStatus.MissingDocument ? "missingDocument" : c.Status.ToString().ToLower(),
+                AccountStatus = c.AccountStatus.ToString().ToLower(),
                 AverageRating = 0, // Mocked for now
                 TotalReservationCount = 0, // Mocked for now
                 CompletedReservationCount = 0, // Mocked for now
@@ -109,13 +110,12 @@ public partial class CaptainService
 
             if (captainFiles.Count < requiredDocCount)
                 item.DocumentStatus = "missing";
-            else if (captainFiles.Any(f => f.Status == "rejected"))
+            else if (captainFiles.Any(f => f.Status == StoredFileStatus.Rejected))
                 item.DocumentStatus = "rejected";
-            else if (captainFiles.Any(f => f.Status == "pendingReview" || string.IsNullOrEmpty(f.Status) || f.Status == "uploaded"))
+            else if (captainFiles.Any(f => f.Status == StoredFileStatus.Pending))
                 item.DocumentStatus = "pendingReview";
-            else if (captainFiles.Any(f => f.Status == "expiringSoon"))
-                item.DocumentStatus = "expiringSoon";
             else
+                item.DocumentStatus = "completed";
                 item.DocumentStatus = "completed";
         }
 
@@ -148,21 +148,21 @@ public partial class CaptainService
             .ToListAsync(cancellationToken);
 
         var storedFiles = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "CaptainDocument" && f.RelatedEntityId == id.ToString() && !f.IsDeleted && f.Status != "rejected")
+            .Where(f => f.RelatedEntityType == "CaptainDocument" && f.RelatedEntityId == id.ToString() && !f.IsDeleted && f.Status != StoredFileStatus.Rejected)
             .ToListAsync(cancellationToken);
 
         var detail = new AdminCaptainDetailDto
         {
             Id = c.Id,
             ApplicationNo = string.IsNullOrEmpty(c.ApplicationNo) ? $"APP-{c.Id.ToString().Substring(0,6).ToUpper()}" : c.ApplicationNo,
-            ApplicationType = string.IsNullOrEmpty(c.ApplicationType) ? "individual" : c.ApplicationType.ToLower(),
+            ApplicationType = c.ApplicationType.ToString().ToLower(),
             DisplayName = $"{c.User.FirstName} {c.User.LastName}",
             Email = c.User.Email ?? string.Empty,
             Phone = c.User.PhoneNumber ?? string.Empty,
             Location = c.Location,
             Harbor = c.Harbor,
-            ApplicationStatus = c.Status == "UnderReview" ? "inReview" : c.Status == "MissingDocument" ? "missingDocument" : c.Status.ToLower(),
-            AccountStatus = c.AccountStatus.ToLower(),
+            ApplicationStatus = c.Status == CaptainStatus.UnderReview ? "inReview" : c.Status == CaptainStatus.MissingDocument ? "missingDocument" : c.Status.ToString().ToLower(),
+            AccountStatus = c.AccountStatus.ToString().ToLower(),
             DocumentSummaryStatus = "completed",
             CreatedAt = c.CreatedAt,
             UpdatedAt = c.UpdatedAt,
@@ -197,7 +197,7 @@ public partial class CaptainService
 
             Documents = storedFiles.Select(f => 
             {
-                var (docTitle, docType) = GetDocumentInfo(f.FileType);
+                var (docTitle, docType) = GetDocumentInfo(f.FileType.ToString());
                 return new CaptainDocumentDto
                 {
                     Id = f.Id,
@@ -206,7 +206,7 @@ public partial class CaptainService
                     FileName = f.OriginalFileName,
                     FileSizeText = $"{Math.Round(f.SizeInBytes / 1024.0, 2)} KB",
                     UploadedAt = f.CreatedAt,
-                    Status = string.IsNullOrEmpty(f.Status) ? "completed" : (f.Status == "approved" ? "completed" : f.Status)
+                    Status = f.Status == StoredFileStatus.Approved ? "completed" : char.ToLowerInvariant(f.Status.ToString()[0]) + f.Status.ToString().Substring(1)
                 };
             }).ToList(),
             
@@ -260,12 +260,10 @@ public partial class CaptainService
 
         if (storedFiles.Count < requiredDocCount)
             detail.DocumentSummaryStatus = "missing";
-        else if (storedFiles.Any(f => f.Status == "rejected"))
+        else if (storedFiles.Any(f => f.Status == StoredFileStatus.Rejected))
             detail.DocumentSummaryStatus = "rejected";
-        else if (storedFiles.Any(f => f.Status == "pendingReview" || string.IsNullOrEmpty(f.Status) || f.Status == "uploaded"))
+        else if (storedFiles.Any(f => f.Status == StoredFileStatus.Pending))
             detail.DocumentSummaryStatus = "pendingReview";
-        else if (storedFiles.Any(f => f.Status == "expiringSoon"))
-            detail.DocumentSummaryStatus = "expiringSoon";
         else
             detail.DocumentSummaryStatus = "completed";
 
@@ -278,7 +276,7 @@ public partial class CaptainService
         if (c == null)
             return Result.Failure("CAPTAIN_NOT_FOUND", "Kaptan bulunamadı.");
 
-        c.AccountStatus = "Suspended";
+        c.AccountStatus = CaptainAccountStatus.Suspended;
         c.AdminNote = string.IsNullOrEmpty(c.AdminNote) ? reason : $"{c.AdminNote}\nSuspension Reason: {reason}";
         
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -291,7 +289,7 @@ public partial class CaptainService
         if (c == null)
             return Result.Failure("CAPTAIN_NOT_FOUND", "Kaptan bulunamadı.");
 
-        c.AccountStatus = "Active";
+        c.AccountStatus = CaptainAccountStatus.Active;
         
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
@@ -311,7 +309,7 @@ public partial class CaptainService
         if (doc == null)
             return Result.Failure("DOCUMENT_NOT_FOUND", "Belge bulunamadı.");
 
-        doc.Status = "approved";
+        doc.Status = StoredFileStatus.Approved;
 
         var audit = new EIskele.Domain.Entities.AuditLog
         {
@@ -349,7 +347,7 @@ public partial class CaptainService
 
         // Instead of hard deleting, we mark it as rejected so the Captain panel timeline can still show it,
         // but it will be filtered out from Admin lists.
-        doc.Status = "rejected";
+        doc.Status = StoredFileStatus.Rejected;
         doc.StoragePath = string.Empty;
         doc.PublicUrl = string.Empty;
         doc.SizeInBytes = 0;

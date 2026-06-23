@@ -54,79 +54,79 @@ public class AdminReservationsController : BaseController
     [HttpPost("{id}/approve")]
     public IActionResult Approve(Guid id, [FromBody] ApproveReservationDto dto)
     {
-        return Ok(new { success = true, message = "Rezervasyon onaylandı." });
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "Rezervasyon onaylandı.");
     }
 
     [HttpPost("{id}/reject")]
     public IActionResult Reject(Guid id, [FromBody] RejectReservationDto dto)
     {
-        return Ok(new { success = true, message = "Rezervasyon reddedildi." });
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "Rezervasyon reddedildi.");
     }
 
     [HttpPost("{id}/reminder")]
     public IActionResult Reminder(Guid id, [FromBody] object dto)
     {
-        return Ok(new { success = true, message = "Hatırlatma gönderildi." });
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "Hatırlatma gönderildi.");
     }
 
     [HttpPost("{id}/status")]
     public IActionResult UpdateStatus(Guid id, [FromBody] object dto)
     {
-        return Ok(new { success = true, message = "Durum güncellendi." });
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "Durum güncellendi.");
     }
 
     [HttpPost("{id}/notes")]
     public IActionResult AddNote(Guid id, [FromBody] object dto)
     {
-        return Ok(new { success = true, message = "Not eklendi." });
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "Not eklendi.");
     }
 
     [HttpGet("{id}/payment")]
     public IActionResult GetPayment(Guid id)
     {
-        return Ok(new { success = true, data = new { paymentStatus = "pending", amount = 0, currency = "TRY" } });
+        return HandleResult(EIskele.Application.Common.Results.Result<object>.Success(new { paymentStatus = "pending", amount = 0, currency = "TRY" }));
     }
 
     [HttpGet("{id}/cancellation")]
     public IActionResult GetCancellation(Guid id)
     {
-        return Ok(new { success = true, data = (object?)null });
+        return HandleResult(EIskele.Application.Common.Results.Result<object?>.Success(null));
     }
 
     [HttpGet("{id}/postpone-info")]
     public IActionResult GetPostponeInfo(Guid id)
     {
-        return Ok(new { success = true, data = (object?)null });
+        return HandleResult(EIskele.Application.Common.Results.Result<object?>.Success(null));
     }
 
     [HttpGet("{id}/notifications")]
     public IActionResult GetNotifications(Guid id)
     {
-        return Ok(new { success = true, data = new object[] { } });
+        return HandleResult(EIskele.Application.Common.Results.Result<object[]>.Success(new object[] { }));
     }
 
     [HttpGet("{id}/notes")]
     public IActionResult GetNotes(Guid id)
     {
-        return Ok(new { success = true, data = new object[] { } });
+        return HandleResult(EIskele.Application.Common.Results.Result<object[]>.Success(new object[] { }));
     }
 
     [HttpGet("{id}/audit-logs")]
     public IActionResult GetAuditLogs(Guid id)
     {
-        return Ok(new { success = true, data = new object[] { } });
+        return HandleResult(EIskele.Application.Common.Results.Result<object[]>.Success(new object[] { }));
     }
 
     [HttpPost("{id}/payment/status")]
     public IActionResult UpdatePaymentStatus(Guid id, [FromBody] object dto)
     {
-        return Ok(new { success = true, message = "Ödeme durumu güncellendi." });
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "Ödeme durumu güncellendi.");
     }
 
     [HttpDelete("{id}/notes/{noteId}")]
     public IActionResult DeleteNote(Guid id, string noteId)
     {
-        return Ok(new { success = true, message = "Not silindi." });
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "Not silindi.");
     }
 }
 

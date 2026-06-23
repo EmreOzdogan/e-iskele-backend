@@ -10,10 +10,12 @@ namespace EIskele.Api.Controllers;
 public class LocationsController : BaseController
 {
     private readonly ILocationService _locationService;
+    private readonly IHarborService _harborService;
 
-    public LocationsController(ILocationService locationService)
+    public LocationsController(ILocationService locationService, IHarborService harborService)
     {
         _locationService = locationService;
+        _harborService = harborService;
     }
 
     [HttpGet]
@@ -26,7 +28,7 @@ public class LocationsController : BaseController
     [HttpGet("harbors")]
     public async Task<IActionResult> GetActiveHarbors(CancellationToken cancellationToken)
     {
-        var result = await _locationService.GetActiveHarborsAsync(cancellationToken);
+        var result = await _harborService.GetActiveHarborsAsync(cancellationToken);
         return HandleResult(result);
     }
 }

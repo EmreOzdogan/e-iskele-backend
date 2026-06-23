@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EIskele.Application.Common.Notifications;
 using EIskele.Domain.Entities;
+using EIskele.Domain.Enums;
 using EIskele.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -60,11 +61,11 @@ public class NotificationService : INotificationService
         {
             Id = Guid.NewGuid(),
             UserId = request.UserId,
-            Channel = request.Channel,
-            Type = request.TemplateCode,
+            Channel = Enum.Parse<NotificationChannel>(request.Channel, true),
+            Type = Enum.Parse<NotificationType>(request.TemplateCode, true),
             Subject = subject,
             Body = body,
-            Status = "Pending",
+            Status = NotificationStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -72,7 +73,7 @@ public class NotificationService : INotificationService
 
         if (sender == null)
         {
-            notification.Status = "Failed";
+            notification.Status = NotificationStatus.Failed;
             notification.ErrorMessage = "İlgili kanal için gönderici bulunamadı.";
             await _dbContext.SaveChangesAsync(cancellationToken);
             return new NotificationResult { Success = false, ErrorMessage = notification.ErrorMessage };
@@ -83,18 +84,18 @@ public class NotificationService : INotificationService
             var isSent = await sender.SendAsync(toAddress, subject, body, cancellationToken);
             if (isSent)
             {
-                notification.Status = "Sent";
+                notification.Status = NotificationStatus.Sent;
                 notification.SentAt = DateTime.UtcNow;
             }
             else
             {
-                notification.Status = "Failed";
+                notification.Status = NotificationStatus.Failed;
                 notification.ErrorMessage = "Gönderici servisi başarısız döndü.";
             }
         }
         catch (Exception ex)
         {
-            notification.Status = "Failed";
+            notification.Status = NotificationStatus.Failed;
             notification.ErrorMessage = ex.Message;
         }
 
@@ -102,7 +103,7 @@ public class NotificationService : INotificationService
 
         return new NotificationResult 
         { 
-            Success = notification.Status == "Sent", 
+            Success = notification.Status == NotificationStatus.Sent, 
             ErrorMessage = notification.ErrorMessage 
         };
     }

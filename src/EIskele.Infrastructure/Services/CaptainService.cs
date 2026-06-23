@@ -82,11 +82,11 @@ public partial class CaptainService : ICaptainService
             Id = captainId,
             UserId = userId,
             ApplicationNo = applicationNo,
-            ApplicationType = request.ApplicationType,
+            ApplicationType = request.ApplicationType.ToLower() == "company" ? EIskele.Domain.Enums.CaptainApplicationType.Company : EIskele.Domain.Enums.CaptainApplicationType.Individual,
             IdentityNumber = request.Individual?.IdentityNumber ?? string.Empty,
             LicenseNumber = string.Empty, // Gelecekte belge okuma ile dolabilir
-            Status = "UnderReview",
-            AccountStatus = "Active",
+            Status = EIskele.Domain.Enums.CaptainStatus.UnderReview,
+            AccountStatus = EIskele.Domain.Enums.CaptainAccountStatus.Active,
             Address = request.ApplicationType == "company" ? request.Company?.Address ?? "" : request.Individual?.Address ?? "",
             Iban = request.Payout?.Iban ?? string.Empty
         };
@@ -155,7 +155,7 @@ public partial class CaptainService : ICaptainService
         {
             ApplicationId = captain.Id,
             ApplicationNo = captain.ApplicationNo,
-            Status = captain.Status
+            Status = captain.Status.ToString()
         });
     }
 
@@ -167,12 +167,12 @@ public partial class CaptainService : ICaptainService
             return Result.Failure("NOT_FOUND", "Başvuru bulunamadı.");
         }
 
-        if (captain.Status == "Approved")
+        if (captain.Status == EIskele.Domain.Enums.CaptainStatus.Approved)
         {
             return Result.Failure("CAPTAIN.ALREADY_APPROVED", "Bu başvuru zaten onaylanmış.");
         }
 
-        captain.Status = "Approved";
+        captain.Status = EIskele.Domain.Enums.CaptainStatus.Approved;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
@@ -186,7 +186,7 @@ public partial class CaptainService : ICaptainService
             return Result.Failure("NOT_FOUND", "Başvuru bulunamadı.");
         }
 
-        captain.Status = "Rejected";
+        captain.Status = EIskele.Domain.Enums.CaptainStatus.Rejected;
         captain.AdminNote = reason;
         await _dbContext.SaveChangesAsync(cancellationToken);
 

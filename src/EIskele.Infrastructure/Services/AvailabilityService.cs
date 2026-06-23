@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using EIskele.Application.Availability;
 using EIskele.Application.Common.Results;
 using EIskele.Domain.Entities;
+using EIskele.Domain.Enums;
 using EIskele.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,7 +33,7 @@ public class AvailabilityService : IAvailabilityService
             BoatId = s.BoatId,
             StartDateTime = s.StartDateTime,
             EndDateTime = s.EndDateTime,
-            Status = s.Status
+            Status = s.Status.ToString()
         });
 
         return Result<IEnumerable<AvailabilitySlotResponse>>.Success(response);
@@ -67,7 +68,7 @@ public class AvailabilityService : IAvailabilityService
             BoatId = request.BoatId,
             StartDateTime = request.StartDate,
             EndDateTime = request.EndDate,
-            Status = "Closed",
+            Status = AvailabilitySlotStatus.Closed,
             Reason = request.Reason
         };
 

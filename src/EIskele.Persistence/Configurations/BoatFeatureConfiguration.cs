@@ -21,6 +21,7 @@ public class BoatFeatureConfiguration : IEntityTypeConfiguration<BoatFeature>
             .HasMaxLength(50);
 
         builder.Property(bf => bf.Status)
+            .HasConversion<string>()
             .IsRequired()
             .HasMaxLength(50);
 

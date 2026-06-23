@@ -217,7 +217,7 @@ public partial class ReservationService
         // Send email
         if (reservation.Customer != null && !string.IsNullOrWhiteSpace(reservation.Customer.Email))
         {
-            var smtpSettingsResult = await _settingsService.GetSmtpEmailSettingsAsync(cancellationToken);
+            var smtpSettingsResult = await _smtpEmailSettingsService.GetSmtpEmailSettingsAsync(cancellationToken);
             if (smtpSettingsResult.IsSuccess && smtpSettingsResult.Value != null && smtpSettingsResult.Value.SmtpEnabled)
             {
                 var htmlBody = $@"
@@ -266,7 +266,7 @@ public partial class ReservationService
         // Send email
         if (reservation.Customer != null && !string.IsNullOrWhiteSpace(reservation.Customer.Email))
         {
-            var smtpSettingsResult = await _settingsService.GetSmtpEmailSettingsAsync(cancellationToken);
+            var smtpSettingsResult = await _smtpEmailSettingsService.GetSmtpEmailSettingsAsync(cancellationToken);
             if (smtpSettingsResult.IsSuccess && smtpSettingsResult.Value != null && smtpSettingsResult.Value.SmtpEnabled)
             {
                 var htmlBody = $@"

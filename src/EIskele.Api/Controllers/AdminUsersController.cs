@@ -42,8 +42,7 @@ public class AdminUsersController : BaseController
     [HttpPut("{id:guid}/status")]
     public async Task<IActionResult> UpdateUserStatus(Guid id, [FromBody] UpdateUserStatusRequest request, CancellationToken cancellationToken)
     {
-        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var currentUserId = currentUserIdStr != null ? Guid.Parse(currentUserIdStr) : Guid.Empty;
+        var currentUserId = this.UserId;
         var result = await _adminUserService.UpdateUserStatusAsync(id, request, currentUserId, cancellationToken);
         return HandleResult(result);
     }
@@ -51,8 +50,7 @@ public class AdminUsersController : BaseController
     [HttpPut("{id:guid}/roles")]
     public async Task<IActionResult> UpdateUserRoles(Guid id, [FromBody] UpdateUserRolesRequest request, CancellationToken cancellationToken)
     {
-        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var currentUserId = currentUserIdStr != null ? Guid.Parse(currentUserIdStr) : Guid.Empty;
+        var currentUserId = this.UserId;
         var result = await _adminUserService.UpdateUserRolesAsync(id, request, currentUserId, cancellationToken);
         return HandleResult(result);
     }
@@ -60,8 +58,7 @@ public class AdminUsersController : BaseController
     [HttpPost]
     public async Task<IActionResult> CreateAdminUser([FromBody] CreateAdminUserRequest request, CancellationToken cancellationToken)
     {
-        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var currentUserId = currentUserIdStr != null ? Guid.Parse(currentUserIdStr) : Guid.Empty;
+        var currentUserId = this.UserId;
         var result = await _adminUserService.CreateAdminUserAsync(request, currentUserId, cancellationToken);
         return HandleResult(result);
     }
@@ -69,8 +66,7 @@ public class AdminUsersController : BaseController
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
     {
-        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var currentUserId = currentUserIdStr != null ? Guid.Parse(currentUserIdStr) : Guid.Empty;
+        var currentUserId = this.UserId;
         var result = await _adminUserService.DeleteUserAsync(id, currentUserId, cancellationToken);
         return HandleResult(result);
     }

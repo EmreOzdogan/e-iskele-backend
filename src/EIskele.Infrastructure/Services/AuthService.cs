@@ -20,14 +20,14 @@ public class AuthService : IAuthService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IConfiguration _configuration;
-    private readonly EIskele.Application.Common.Settings.ISettingsService _settingsService;
+    private readonly EIskele.Application.Common.Settings.ISecuritySettingsService _securitySettingsService;
 
-    public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, EIskele.Application.Common.Settings.ISettingsService settingsService)
+    public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, EIskele.Application.Common.Settings.ISecuritySettingsService securitySettingsService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
-        _settingsService = settingsService;
+        _securitySettingsService = securitySettingsService;
     }
 
     public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -38,7 +38,7 @@ public class AuthService : IAuthService
             return Result<AuthResponse>.Failure("AUTH.EMAIL_EXISTS", "Bu e-posta adresi ile kayıtlı bir kullanıcı zaten var.");
         }
 
-        var securitySettingsResult = await _settingsService.GetSecuritySettingsAsync(cancellationToken);
+        var securitySettingsResult = await _securitySettingsService.GetSecuritySettingsAsync(cancellationToken);
         var securitySettings = securitySettingsResult.IsSuccess ? securitySettingsResult.Value : new EIskele.Application.Common.Settings.SecuritySettingsDto();
 
         if (request.Password.Length < securitySettings.PasswordMinimumLength)
@@ -90,7 +90,7 @@ public class AuthService : IAuthService
             return Result<AuthResponse>.Failure("AUTH.INVALID_CREDENTIALS", "Geçersiz e-posta veya şifre.");
         }
 
-        var securitySettingsResult = await _settingsService.GetSecuritySettingsAsync(cancellationToken);
+        var securitySettingsResult = await _securitySettingsService.GetSecuritySettingsAsync(cancellationToken);
         var securitySettings = securitySettingsResult.IsSuccess ? securitySettingsResult.Value : new EIskele.Application.Common.Settings.SecuritySettingsDto();
 
         if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)

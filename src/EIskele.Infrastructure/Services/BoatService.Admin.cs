@@ -69,7 +69,7 @@ public partial class BoatService
     public async Task<Result<List<BoatImageDto>>> GetAdminBoatImagesAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var images = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == "CoverImage" || f.FileType == "GalleryImage"))
+            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == StoredFileType.BoatCoverImage || f.FileType == StoredFileType.BoatImage))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
@@ -77,8 +77,8 @@ public partial class BoatService
         {
             Id = f.Id,
             ImageUrl = f.PublicUrl,
-            ImageType = f.FileType == "CoverImage" ? "cover" : "gallery",
-            Status = f.Status,
+            ImageType = f.FileType == StoredFileType.BoatCoverImage ? "cover" : "gallery",
+            Status = f.Status.ToString(),
             FileName = f.OriginalFileName,
             UploadedAt = f.CreatedAt
         }).ToList();
@@ -95,18 +95,18 @@ public partial class BoatService
     public async Task<Result<List<BoatDocumentDto>>> GetAdminBoatDocumentsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var documents = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == "BoatLicense" || f.FileType == "Insurance"))
+            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == StoredFileType.BoatLicenseDocument || f.FileType == StoredFileType.InsuranceDocument))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         var dtos = documents.Select(f => new BoatDocumentDto
         {
             Id = f.Id,
-            DocumentType = f.FileType,
-            DocumentName = f.FileType == "BoatLicense" ? "Tekne Ruhsatı" : "Sigorta Belgesi",
+            DocumentType = f.FileType.ToString(),
+            DocumentName = f.FileType == StoredFileType.BoatLicenseDocument ? "Tekne Ruhsatı" : "Sigorta Belgesi",
             FileName = f.OriginalFileName,
             FileSize = (f.SizeInBytes / 1024) + " KB",
-            Status = f.Status,
+            Status = f.Status.ToString(),
             UploadedAt = f.CreatedAt,
             ValidUntil = null,
             DownloadUrl = f.PublicUrl
@@ -134,7 +134,7 @@ public partial class BoatService
             Name = f.Name,
             Category = f.Category,
             IsAvailable = f.IsAvailable,
-            Status = f.Status
+            Status = f.Status.ToString()
         }).ToList();
 
         // Add mock features if empty
@@ -226,7 +226,7 @@ public partial class BoatService
         var file = await _dbContext.StoredFiles.FindAsync(new object[] { imageId }, cancellationToken);
         if (file != null)
         {
-            file.Status = "approved";
+            file.Status = StoredFileStatus.Approved;
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
         return Result.Success();
@@ -237,7 +237,7 @@ public partial class BoatService
         var file = await _dbContext.StoredFiles.FindAsync(new object[] { imageId }, cancellationToken);
         if (file != null)
         {
-            file.Status = "rejected";
+            file.Status = StoredFileStatus.Rejected;
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
         return Result.Success();
@@ -248,7 +248,7 @@ public partial class BoatService
         var file = await _dbContext.StoredFiles.FindAsync(new object[] { documentId }, cancellationToken);
         if (file != null)
         {
-            file.Status = "approved";
+            file.Status = StoredFileStatus.Approved;
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
         return Result.Success();
@@ -259,7 +259,7 @@ public partial class BoatService
         var file = await _dbContext.StoredFiles.FindAsync(new object[] { documentId }, cancellationToken);
         if (file != null)
         {
-            file.Status = "rejected";
+            file.Status = StoredFileStatus.Rejected;
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
         return Result.Success();

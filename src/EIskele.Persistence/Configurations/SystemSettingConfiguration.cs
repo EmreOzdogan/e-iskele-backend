@@ -12,7 +12,7 @@ public class SystemSettingConfiguration : IEntityTypeConfiguration<SystemSetting
 
         builder.Property(s => s.Key).IsRequired().HasMaxLength(100);
         builder.Property(s => s.Value).IsRequired();
-        builder.Property(s => s.ValueType).IsRequired().HasMaxLength(50);
+        builder.Property(s => s.ValueType).HasConversion<string>().IsRequired().HasMaxLength(50);
         builder.Property(s => s.Group).HasMaxLength(100);
         builder.Property(s => s.Description).HasMaxLength(500);
 

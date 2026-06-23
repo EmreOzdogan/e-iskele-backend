@@ -56,15 +56,15 @@ public class CaptainLayoutService : ICaptainLayoutService
             {
                 accountStatus = "pendingReview";
             }
-            else if (captain.Status == "Approved")
+            else if (captain.Status == CaptainStatus.Approved)
             {
                 accountStatus = "approved";
             }
-            else if (captain.Status == "Rejected")
+            else if (captain.Status == CaptainStatus.Rejected)
             {
                 accountStatus = "rejected";
             }
-            else if (captain.Status == "Suspended")
+            else if (captain.AccountStatus == CaptainAccountStatus.Suspended)
             {
                 accountStatus = "suspended";
             }
@@ -87,7 +87,7 @@ public class CaptainLayoutService : ICaptainLayoutService
                 FullName = $"{user.FirstName} {user.LastName}",
                 DisplayName = $"{user.FirstName} {user.LastName}",
                 AccountType = captain?.Company != null ? "Kurumsal kaptan" : "Bireysel kaptan",
-                VerificationStatus = captain?.Status == "Approved" ? "Onaylı" : "İncelemede",
+                VerificationStatus = captain?.Status == CaptainStatus.Approved ? "Onaylı" : "İncelemede",
                 AvatarUrl = "",
                 CompanyName = captain?.Company?.CompanyName ?? "",
                 PrimaryBoatName = primaryBoat?.Name ?? "Tekne Eklenmedi",
@@ -98,7 +98,7 @@ public class CaptainLayoutService : ICaptainLayoutService
             var pendingResCount = reservations.Count(r => r.Status == ReservationStatus.WaitingCaptainApproval);
             var unansweredRevCount = reviews.Count(r => r.Reply == null);
             // Mocking document actions and support for now until those entities are fully modeled
-            var docActions = captain != null && captain.Status != "Approved" ? 1 : 0;
+            var docActions = captain != null && captain.Status != CaptainStatus.Approved ? 1 : 0;
 
             var counters = new CaptainCountersDto
             {
@@ -121,13 +121,13 @@ public class CaptainLayoutService : ICaptainLayoutService
                 Id = n.Id.ToString(),
                 Title = n.Subject,
                 Description = n.Body,
-                Type = n.Type, // Ensure it aligns with "reservation", "document", "review"
+                Type = n.Type.ToString(), // Ensure it aligns with "reservation", "document", "review"
                 CreatedAtText = n.CreatedAt.ToString("dd MMM HH:mm"),
                 ActionPath = "/panel", // Can be extended to be dynamic based on type
-                Read = n.Status == "Read"
+                Read = n.Status == NotificationStatus.Read
             }).ToList();
 
-            counters.UnreadNotifications = await _context.Notifications.CountAsync(n => n.UserId == userGuid && n.Status != "Read", cancellationToken);
+            counters.UnreadNotifications = await _context.Notifications.CountAsync(n => n.UserId == userGuid && n.Status != NotificationStatus.Read, cancellationToken);
 
             return Result<CaptainLayoutDataDto>.Success(new CaptainLayoutDataDto
             {

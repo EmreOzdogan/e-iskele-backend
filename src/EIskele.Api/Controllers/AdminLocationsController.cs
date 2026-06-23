@@ -13,10 +13,12 @@ namespace EIskele.Api.Controllers;
 public class AdminLocationsController : BaseController
 {
     private readonly ILocationService _locationService;
+    private readonly IHarborService _harborService;
 
-    public AdminLocationsController(ILocationService locationService)
+    public AdminLocationsController(ILocationService locationService, IHarborService harborService)
     {
         _locationService = locationService;
+        _harborService = harborService;
     }
 
     [HttpGet]
@@ -57,7 +59,7 @@ public class AdminLocationsController : BaseController
     [HttpPost]
     public async Task<IActionResult> CreateLocation([FromBody] CreateLocationDto dto, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = this.UserId;
         var result = await _locationService.CreateLocationAsync(dto, userId, cancellationToken);
         return HandleResult(result);
     }
@@ -67,7 +69,7 @@ public class AdminLocationsController : BaseController
     {
         if (id != dto.Id) return HandleResult(Result.Failure("VALIDATION_ERROR", "Id eşleşmiyor."));
 
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = this.UserId;
         var result = await _locationService.UpdateLocationAsync(dto, userId, cancellationToken);
         return HandleResult(result);
     }
@@ -75,7 +77,7 @@ public class AdminLocationsController : BaseController
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteLocation(Guid id, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = this.UserId;
         var result = await _locationService.DeleteLocationAsync(id, userId, cancellationToken);
         return HandleResult(result);
     }
@@ -83,7 +85,7 @@ public class AdminLocationsController : BaseController
     [HttpPatch("{id}/activate")]
     public async Task<IActionResult> ActivateLocation(Guid id, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = this.UserId;
         var result = await _locationService.ActivateLocationAsync(id, userId, cancellationToken);
         return HandleResult(result);
     }
@@ -91,7 +93,7 @@ public class AdminLocationsController : BaseController
     [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> DeactivateLocation(Guid id, [FromBody] DeactivateLocationDto dto, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = this.UserId;
         var result = await _locationService.DeactivateLocationAsync(id, dto.Reason, userId, cancellationToken);
         return HandleResult(result);
     }
@@ -99,7 +101,7 @@ public class AdminLocationsController : BaseController
     [HttpPatch("{id}/mark-popular")]
     public async Task<IActionResult> MarkLocationPopular(Guid id, [FromBody] MarkLocationPopularDto dto, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = this.UserId;
         var result = await _locationService.MarkLocationPopularAsync(id, dto.Note, dto.Order, userId, cancellationToken);
         return HandleResult(result);
     }
@@ -107,7 +109,7 @@ public class AdminLocationsController : BaseController
     [HttpPatch("{id}/unmark-popular")]
     public async Task<IActionResult> UnmarkLocationPopular(Guid id, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = this.UserId;
         var result = await _locationService.UnmarkLocationPopularAsync(id, userId, cancellationToken);
         return HandleResult(result);
     }
@@ -116,7 +118,7 @@ public class AdminLocationsController : BaseController
     [HttpGet("{locationId}/harbors")]
     public async Task<IActionResult> GetLocationHarbors(Guid locationId, CancellationToken cancellationToken)
     {
-        var result = await _locationService.GetLocationHarborsAsync(locationId, cancellationToken);
+        var result = await _harborService.GetLocationHarborsAsync(locationId, cancellationToken);
         return HandleResult(result);
     }
 
@@ -125,8 +127,8 @@ public class AdminLocationsController : BaseController
     {
         if (locationId != dto.LocationId) return HandleResult(Result.Failure("VALIDATION_ERROR", "LocationId eşleşmiyor."));
 
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var result = await _locationService.CreateHarborAsync(dto, userId, cancellationToken);
+        var userId = this.UserId;
+        var result = await _harborService.CreateHarborAsync(dto, userId, cancellationToken);
         return HandleResult(result);
     }
 
@@ -136,16 +138,16 @@ public class AdminLocationsController : BaseController
         if (locationId != dto.LocationId) return HandleResult(Result.Failure("VALIDATION_ERROR", "LocationId eşleşmiyor."));
         if (harborId != dto.Id) return HandleResult(Result.Failure("VALIDATION_ERROR", "Id eşleşmiyor."));
 
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var result = await _locationService.UpdateHarborAsync(dto, userId, cancellationToken);
+        var userId = this.UserId;
+        var result = await _harborService.UpdateHarborAsync(dto, userId, cancellationToken);
         return HandleResult(result);
     }
 
     [HttpDelete("{locationId}/harbors/{id}")]
     public async Task<IActionResult> DeleteHarbor(Guid locationId, Guid harborId, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var result = await _locationService.DeleteHarborAsync(harborId, userId, cancellationToken);
+        var userId = this.UserId;
+        var result = await _harborService.DeleteHarborAsync(harborId, userId, cancellationToken);
         return HandleResult(result);
     }
 }
