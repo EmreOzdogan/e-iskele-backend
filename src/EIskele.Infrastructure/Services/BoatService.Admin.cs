@@ -69,7 +69,7 @@ public partial class BoatService
     public async Task<Result<List<BoatImageDto>>> GetAdminBoatImagesAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var images = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == StoredFileType.BoatCoverImage || f.FileType == StoredFileType.BoatImage))
+            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == StoredFileType.BoatCoverImage.ToString() || f.FileType == StoredFileType.BoatImage.ToString()))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
@@ -77,7 +77,7 @@ public partial class BoatService
         {
             Id = f.Id,
             ImageUrl = f.PublicUrl,
-            ImageType = f.FileType == StoredFileType.BoatCoverImage ? "cover" : "gallery",
+            ImageType = f.FileType == StoredFileType.BoatCoverImage.ToString() ? "cover" : "gallery",
             Status = f.Status.ToString(),
             FileName = f.OriginalFileName,
             UploadedAt = f.CreatedAt
@@ -95,7 +95,7 @@ public partial class BoatService
     public async Task<Result<List<BoatDocumentDto>>> GetAdminBoatDocumentsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var documents = await _dbContext.StoredFiles
-            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == StoredFileType.BoatLicenseDocument || f.FileType == StoredFileType.InsuranceDocument))
+            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == id.ToString() && (f.FileType == StoredFileType.BoatLicenseDocument.ToString() || f.FileType == StoredFileType.InsuranceDocument.ToString()))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
@@ -103,7 +103,7 @@ public partial class BoatService
         {
             Id = f.Id,
             DocumentType = f.FileType.ToString(),
-            DocumentName = f.FileType == StoredFileType.BoatLicenseDocument ? "Tekne Ruhsatı" : "Sigorta Belgesi",
+            DocumentName = f.FileType == StoredFileType.BoatLicenseDocument.ToString() ? "Tekne Ruhsatı" : "Sigorta Belgesi",
             FileName = f.OriginalFileName,
             FileSize = (f.SizeInBytes / 1024) + " KB",
             Status = f.Status.ToString(),

@@ -12,7 +12,7 @@ public class StoredFileConfiguration : IEntityTypeConfiguration<StoredFile>
 
         builder.Property(f => f.RelatedEntityType).IsRequired().HasMaxLength(100);
         builder.Property(f => f.RelatedEntityId).IsRequired().HasMaxLength(50);
-        builder.Property(f => f.FileType).HasConversion<string>().IsRequired().HasMaxLength(50);
+        builder.Property(f => f.FileType).IsRequired().HasMaxLength(50);
         builder.Property(f => f.OriginalFileName).HasMaxLength(255);
         builder.Property(f => f.StoredFileName).HasMaxLength(255);
         builder.Property(f => f.MimeType).HasMaxLength(100);

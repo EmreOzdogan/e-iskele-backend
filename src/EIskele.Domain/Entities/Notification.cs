@@ -8,7 +8,7 @@ public class Notification : BaseEntity
 {
     public Guid UserId { get; set; }
     public NotificationChannel Channel { get; set; } = NotificationChannel.Email;
-    public NotificationType Type { get; set; } = NotificationType.Info;
+    public string Type { get; set; } = string.Empty;
     public string Subject { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public NotificationStatus Status { get; set; } = NotificationStatus.Pending;

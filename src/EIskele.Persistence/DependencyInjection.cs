@@ -11,6 +11,8 @@ public static class DependencyInjection
         services.AddDbContext<EIskeleDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddScoped<EIskele.Application.Common.Data.IUnitOfWork, EIskele.Persistence.Data.UnitOfWork>();
+
         return services;
     }
 }

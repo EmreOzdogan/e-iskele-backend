@@ -62,7 +62,7 @@ public class NotificationService : INotificationService
             Id = Guid.NewGuid(),
             UserId = request.UserId,
             Channel = Enum.Parse<NotificationChannel>(request.Channel, true),
-            Type = Enum.Parse<NotificationType>(request.TemplateCode, true),
+            Type = request.TemplateCode,
             Subject = subject,
             Body = body,
             Status = NotificationStatus.Pending,

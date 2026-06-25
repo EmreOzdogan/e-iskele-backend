@@ -10,38 +10,42 @@ namespace EIskele.Api.Controllers;
 [Route("api/[controller]")]
 public class ReservationsController : BaseController
 {
-    private readonly IReservationService _reservationService;
+    private readonly IReservationCommandService _reservationCommandService;
+    private readonly IReservationQueryService _reservationQueryService;
 
-    public ReservationsController(IReservationService reservationService)
+    public ReservationsController(
+        IReservationCommandService reservationCommandService,
+        IReservationQueryService reservationQueryService)
     {
-        _reservationService = reservationService;
+        _reservationCommandService = reservationCommandService;
+        _reservationQueryService = reservationQueryService;
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateReservation([FromBody] CreateReservationRequest request, CancellationToken cancellationToken)
     {
-        var result = await _reservationService.CreateReservationAsync(request, cancellationToken);
+        var result = await _reservationCommandService.CreateReservationAsync(request, cancellationToken);
         return HandleResult(result);
     }
 
     [HttpPost("{id:guid}/approve")]
     public async Task<IActionResult> ApproveReservation(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _reservationService.ApproveReservationAsync(id, cancellationToken);
+        var result = await _reservationCommandService.ApproveReservationAsync(id, cancellationToken);
         return HandleResult(result);
     }
 
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> CancelReservation(Guid id, [FromBody] string reason, CancellationToken cancellationToken)
     {
-        var result = await _reservationService.CancelReservationAsync(id, reason, cancellationToken);
+        var result = await _reservationCommandService.CancelReservationAsync(id, reason, cancellationToken);
         return HandleResult(result);
     }
 
     [HttpGet("users/{userId:guid}")]
     public async Task<IActionResult> GetUserReservations(Guid userId, CancellationToken cancellationToken)
     {
-        var result = await _reservationService.GetReservationsByUserIdAsync(userId, cancellationToken);
+        var result = await _reservationQueryService.GetReservationsByUserIdAsync(userId, cancellationToken);
         return HandleResult(result);
     }
 }

@@ -54,7 +54,7 @@ public class CaptainDocumentsService : ICaptainDocumentsService
                                          .FirstOrDefault(f => f.FileType.ToString() == expectedDoc.Id);
 
             var fileLogs = auditLogs.Where(a => a.EntityType == $"CaptainDocument_{expectedDoc.Id}" && a.EntityId == userId.ToString()).OrderBy(a => a.CreatedAt).ToList();
-            var lastReject = fileLogs.LastOrDefault(a => a.Action == "RejectDocument");
+            var lastReject = fileLogs.LastOrDefault(a => a.Action == "RejectDocument" || a.Action == "DeleteDocument");
 
             if (matchedFile != null)
             {
@@ -93,13 +93,13 @@ public class CaptainDocumentsService : ICaptainDocumentsService
                         Description = "Belge sisteme yüklendi."
                     });
                 }
-                else if (log.Action == "RejectDocument")
+                else if (log.Action == "RejectDocument" || log.Action == "DeleteDocument")
                 {
                     expectedDoc.History.Add(new CaptainDocumentHistoryDto
                     {
                         Id = log.Id.ToString(),
                         DateText = log.CreatedAt.ToString("dd MMMM yyyy HH:mm"),
-                        Title = "Belge Reddedildi",
+                        Title = log.Action == "DeleteDocument" ? "Belge Silindi" : "Belge Reddedildi",
                         Description = log.Description
                     });
                 }

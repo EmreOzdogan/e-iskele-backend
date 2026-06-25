@@ -9,45 +9,49 @@ namespace EIskele.Api.Controllers.Admin;
 [Authorize(Roles = "Admin,SuperAdmin")]
 public class AdminReservationsController : BaseController
 {
-    private readonly IReservationService _reservationService;
+    private readonly IAdminReservationQueryService _queryService;
+    private readonly IAdminReservationCommandService _commandService;
 
-    public AdminReservationsController(IReservationService reservationService)
+    public AdminReservationsController(
+        IAdminReservationQueryService queryService,
+        IAdminReservationCommandService commandService)
     {
-        _reservationService = reservationService;
+        _queryService = queryService;
+        _commandService = commandService;
     }
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary()
     {
-        var result = await _reservationService.GetAdminReservationsSummaryAsync();
+        var result = await _queryService.GetAdminReservationsSummaryAsync();
         return HandleResult(result);
     }
 
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] GetAdminReservationsQuery query)
     {
-        var result = await _reservationService.GetAdminReservationsAsync(query);
+        var result = await _queryService.GetAdminReservationsAsync(query);
         return HandleResult(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var result = await _reservationService.GetAdminReservationDetailAsync(id);
+        var result = await _queryService.GetAdminReservationDetailAsync(id);
         return HandleResult(result);
     }
 
     [HttpPost("{id}/cancel")]
     public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelReservationDto dto)
     {
-        var result = await _reservationService.AdminCancelReservationAsync(id, dto.Reason);
+        var result = await _commandService.AdminCancelReservationAsync(id, dto.Reason);
         return HandleResult(result);
     }
 
     [HttpPost("{id}/postpone")]
     public async Task<IActionResult> Postpone(Guid id, [FromBody] PostponeReservationDto dto)
     {
-        var result = await _reservationService.AdminPostponeReservationAsync(id, dto.NewDate);
+        var result = await _commandService.AdminPostponeReservationAsync(id, dto.NewDate);
         return HandleResult(result);
     }
 

@@ -138,6 +138,7 @@ public class CaptainLayoutService : ICaptainLayoutService
         }
         catch (Exception ex)
         {
+            System.IO.File.AppendAllText("C:\\Users\\Ozem\\Desktop\\Projeler\\e-iskele Projesi\\eiskele\\debug.txt", ex.ToString() + "\n");
             return Result<CaptainLayoutDataDto>.Failure(new EIskele.Application.Common.Errors.Error("ServerError", ex.ToString()));
         }
     }

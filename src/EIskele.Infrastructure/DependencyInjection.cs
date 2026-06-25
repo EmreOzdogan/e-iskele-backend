@@ -44,7 +44,10 @@ public static class DependencyInjection
         services.AddScoped<EIskele.Application.Auth.IAuthService, EIskele.Infrastructure.Services.AuthService>();
         services.AddScoped<EIskele.Application.Captains.ICaptainService, EIskele.Infrastructure.Services.CaptainService>();
         services.AddScoped<EIskele.Application.Boats.IBoatService, EIskele.Infrastructure.Services.BoatService>();
-        services.AddScoped<EIskele.Application.Reservations.IReservationService, EIskele.Infrastructure.Services.ReservationService>();
+        services.AddScoped<EIskele.Application.Reservations.IReservationQueryService, EIskele.Infrastructure.Services.ReservationQueryService>();
+        services.AddScoped<EIskele.Application.Reservations.IReservationCommandService, EIskele.Infrastructure.Services.ReservationCommandService>();
+        services.AddScoped<EIskele.Application.Reservations.IAdminReservationQueryService, EIskele.Infrastructure.Services.AdminReservationQueryService>();
+        services.AddScoped<EIskele.Application.Reservations.IAdminReservationCommandService, EIskele.Infrastructure.Services.AdminReservationCommandService>();
         services.AddScoped<EIskele.Application.Availability.IAvailabilityService, EIskele.Infrastructure.Services.AvailabilityService>();
         services.AddScoped<EIskele.Application.Availability.ICaptainCalendarService, EIskele.Infrastructure.Services.CaptainCalendarService>();
         services.AddScoped<EIskele.Application.Users.Services.IAdminUserService, EIskele.Infrastructure.Services.AdminUserService>();

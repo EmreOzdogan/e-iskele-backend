@@ -21,7 +21,7 @@ public class CaptainLayoutController : BaseController
     public async Task<IActionResult> GetLayoutData(CancellationToken cancellationToken)
     {
         if (this.UserId == System.Guid.Empty)
-            return Unauthorized();
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _layoutService.GetLayoutDataAsync(this.UserId.ToString(), cancellationToken);
         return HandleResult(result);

@@ -43,7 +43,7 @@ public class BoatsController : BaseController
     {
         if (id != request.BoatId)
         {
-            return BadRequest("Route ID ile Body ID eşleşmiyor.");
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("VALIDATION_ERROR", "Route ID ile Body ID eşleşmiyor."));
         }
 
         var result = await _boatService.AddTourPackageAsync(request, cancellationToken);

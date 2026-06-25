@@ -6,5 +6,6 @@ public enum SystemSettingValueType
     Int,
     Decimal,
     Boolean,
-    Json
+    Json,
+    Number
 }

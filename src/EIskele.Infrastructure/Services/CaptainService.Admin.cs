@@ -151,6 +151,60 @@ public partial class CaptainService
             .Where(f => f.RelatedEntityType == "CaptainDocument" && f.RelatedEntityId == id.ToString() && !f.IsDeleted && f.Status != StoredFileStatus.Rejected)
             .ToListAsync(cancellationToken);
 
+        var expectedDocs = GenerateExpectedDocumentsForAdmin(c);
+
+        var documents = new List<CaptainDocumentDto>();
+
+        foreach (var expectedDoc in expectedDocs)
+        {
+            var f = storedFiles.FirstOrDefault(x => x.FileType.ToString() == expectedDoc.Id);
+            if (f != null)
+            {
+                documents.Add(new CaptainDocumentDto
+                {
+                    Id = f.Id,
+                    DocumentType = expectedDoc.Category,
+                    Title = expectedDoc.Name,
+                    FileName = f.OriginalFileName,
+                    FileSizeText = $"{Math.Round(f.SizeInBytes / 1024.0, 2)} KB",
+                    UploadedAt = f.CreatedAt,
+                    Status = f.Status == StoredFileStatus.Approved ? "completed" : char.ToLowerInvariant(f.Status.ToString()[0]) + f.Status.ToString().Substring(1)
+                });
+            }
+            else
+            {
+                var lastRejectLog = auditLogs.Where(a => a.Action == "RejectDocument" || a.Action == "DeleteDocument")
+                                             .FirstOrDefault(a => a.EntityType == $"CaptainDocument_{expectedDoc.Id}");
+
+                documents.Add(new CaptainDocumentDto
+                {
+                    Id = Guid.Empty, // Placeholder for missing doc
+                    DocumentType = expectedDoc.Category,
+                    Title = expectedDoc.Name,
+                    FileName = null,
+                    FileSizeText = null,
+                    UploadedAt = null,
+                    Status = lastRejectLog != null ? "rejected" : "missing",
+                    AdminNote = lastRejectLog?.Description
+                });
+            }
+        }
+
+        var extraFiles = storedFiles.Where(f => !expectedDocs.Any(e => e.Id == f.FileType.ToString())).ToList();
+        foreach (var extra in extraFiles)
+        {
+            documents.Add(new CaptainDocumentDto
+            {
+                Id = extra.Id,
+                DocumentType = "other",
+                Title = extra.OriginalFileName,
+                FileName = extra.OriginalFileName,
+                FileSizeText = $"{Math.Round(extra.SizeInBytes / 1024.0, 2)} KB",
+                UploadedAt = extra.CreatedAt,
+                Status = extra.Status == StoredFileStatus.Approved ? "completed" : char.ToLowerInvariant(extra.Status.ToString()[0]) + extra.Status.ToString().Substring(1)
+            });
+        }
+
         var detail = new AdminCaptainDetailDto
         {
             Id = c.Id,
@@ -195,20 +249,7 @@ public partial class CaptainService
                 Status = "success"
             }).ToList(),
 
-            Documents = storedFiles.Select(f => 
-            {
-                var (docTitle, docType) = GetDocumentInfo(f.FileType.ToString());
-                return new CaptainDocumentDto
-                {
-                    Id = f.Id,
-                    DocumentType = docType,
-                    Title = docTitle,
-                    FileName = f.OriginalFileName,
-                    FileSizeText = $"{Math.Round(f.SizeInBytes / 1024.0, 2)} KB",
-                    UploadedAt = f.CreatedAt,
-                    Status = f.Status == StoredFileStatus.Approved ? "completed" : char.ToLowerInvariant(f.Status.ToString()[0]) + f.Status.ToString().Substring(1)
-                };
-            }).ToList(),
+            Documents = documents,
             
             PerformanceMetrics = new CaptainPerformanceMetricsDto
             {
@@ -357,17 +398,61 @@ public partial class CaptainService
         return Result.Success();
     }
 
-    private (string title, string type) GetDocumentInfo(string fileType)
+    public async Task<Result> DeleteDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(fileType)) return ("Bilinmeyen Belge", "other");
+        var doc = await _dbContext.StoredFiles.FirstOrDefaultAsync(f => f.Id == documentId, cancellationToken);
+        if (doc == null)
+            return Result.Failure("DOCUMENT_NOT_FOUND", "Belge bulunamadı.");
 
-        if (fileType == "doc_captain_license") return ("Kaptan Yeterlilik Belgesi", "license");
-        if (fileType == "doc_captain_id") return ("Kimlik Fotokopisi", "identity");
-        if (fileType == "doc_captain_iban") return ("IBAN Doğrulama Belgesi", "other");
-        if (fileType == "doc_company_tax") return ("Vergi Levhası", "tax");
-        if (fileType.StartsWith("doc_boat_reg_")) return ("Tekne Ruhsatı", "other");
-        if (fileType.StartsWith("doc_boat_ins_")) return ("Sigorta Belgesi", "insurance");
+        var audit = new EIskele.Domain.Entities.AuditLog
+        {
+            Action = "DeleteDocument",
+            EntityType = $"CaptainDocument_{doc.FileType}",
+            EntityId = doc.OwnerUserId.ToString(),
+            Description = "Admin tarafından silindi."
+        };
+        _dbContext.AuditLogs.Add(audit);
 
-        return ("Diğer Belge", "other");
+        // Physically delete file
+        if (!string.IsNullOrEmpty(doc.StoragePath))
+        {
+            await _fileStorageService.DeleteAsync(doc.StoragePath, cancellationToken);
+        }
+
+        doc.Status = StoredFileStatus.Rejected;
+        doc.StoragePath = string.Empty;
+        doc.PublicUrl = string.Empty;
+        doc.SizeInBytes = 0;
+        doc.OriginalFileName = "SİLİNMİŞ DOSYA";
+        doc.IsDeleted = true;
+        doc.DeletedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    private class AdminExpectedDocDto { public string Id { get; set; } = ""; public string Name { get; set; } = ""; public string Category { get; set; } = ""; }
+
+    private List<AdminExpectedDocDto> GenerateExpectedDocumentsForAdmin(Captain captain)
+    {
+        var list = new List<AdminExpectedDocDto>
+        {
+            new() { Id = "doc_captain_license", Name = "Kaptan Yeterlilik Belgesi", Category = "captainLicense" },
+            new() { Id = "doc_captain_id", Name = "Kimlik Fotokopisi", Category = "identity" },
+            new() { Id = "doc_captain_iban", Name = "IBAN Doğrulama Belgesi", Category = "iban" }
+        };
+
+        if (captain.ApplicationType == CaptainApplicationType.Company)
+        {
+            list.Add(new AdminExpectedDocDto { Id = "doc_company_tax", Name = "Vergi Levhası", Category = "taxCertificate" });
+        }
+
+        foreach (var boat in captain.Boats)
+        {
+            list.Add(new AdminExpectedDocDto { Id = $"doc_boat_reg_{boat.Id}", Name = "Tekne Ruhsatı", Category = "boatLicense" });
+            list.Add(new AdminExpectedDocDto { Id = $"doc_boat_ins_{boat.Id}", Name = "Sigorta Belgesi", Category = "insurance" });
+        }
+
+        return list;
     }
 }

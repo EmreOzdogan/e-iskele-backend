@@ -9,7 +9,7 @@ public class StoredFile : BaseEntity, ISoftDeletableEntity
     public Guid OwnerUserId { get; set; }
     public string RelatedEntityType { get; set; } = string.Empty;
     public string RelatedEntityId { get; set; } = string.Empty;
-    public StoredFileType FileType { get; set; } = StoredFileType.BoatImage;
+    public string FileType { get; set; } = string.Empty;
     public string OriginalFileName { get; set; } = string.Empty;
     public string StoredFileName { get; set; } = string.Empty;
     public string MimeType { get; set; } = string.Empty;

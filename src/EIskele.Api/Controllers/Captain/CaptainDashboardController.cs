@@ -21,7 +21,7 @@ public class CaptainDashboardController : BaseController
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
     {
         if (this.UserId == System.Guid.Empty)
-            return Unauthorized();
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _dashboardService.GetDashboardSummaryAsync(this.UserId.ToString(), cancellationToken);
         return HandleResult(result);

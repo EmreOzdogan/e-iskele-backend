@@ -108,7 +108,7 @@ public class SystemSettingsController : BaseController
     public async Task<IActionResult> TestSmtpEmail([FromBody] SmtpEmailSettingsDto dto, CancellationToken cancellationToken)
     {
         var result = await _smtpEmailSettingsService.TestSmtpConnectionAsync(dto, cancellationToken);
-        return HandleResult(result, "SMTP baÄŸlantÄ±sÄ± baÅŸarÄ±lÄ±.");
+        return HandleResult(result, "SMTP bağlantısı başarılı.");
     }
 
     public class SendTestEmailRequest
@@ -135,7 +135,7 @@ public class SystemSettingsController : BaseController
     public async Task<IActionResult> UpdateNotificationSettings([FromBody] NotificationSettingsDto dto, CancellationToken cancellationToken)
     {
         if (this.UserId == Guid.Empty)
-            return Unauthorized();
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _notificationSettingsService.UpdateNotificationSettingsAsync(dto, this.UserId, cancellationToken);
         return HandleResult(result);
@@ -152,7 +152,7 @@ public class SystemSettingsController : BaseController
     public async Task<IActionResult> TestNotification([FromBody] TestNotificationRequest request, CancellationToken cancellationToken)
     {
         var result = await _smtpEmailSettingsService.SendTestScenarioEmailAsync(request.ScenarioKey, request.Email, request.Settings, cancellationToken);
-        return HandleResult(result, "Test bildirimi gÃ¶nderildi.");
+        return HandleResult(result, "Test bildirimi gönderildi.");
     }
 
     [HttpGet("security")]
@@ -166,7 +166,7 @@ public class SystemSettingsController : BaseController
     public async Task<IActionResult> UpdateSecuritySettings([FromBody] SecuritySettingsDto dto, CancellationToken cancellationToken)
     {
         if (this.UserId == Guid.Empty)
-            return Unauthorized();
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _securitySettingsService.UpdateSecuritySettingsAsync(dto, this.UserId, cancellationToken);
         return HandleResult(result);
@@ -208,7 +208,7 @@ public class SystemSettingsController : BaseController
     [Authorize(Roles = "SuperAdmin")]
     public IActionResult TestSmsConnection()
     {
-        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "SMS baÄŸlantÄ± testi baÅŸarÄ±lÄ± (Mock).");
+        return HandleResult(EIskele.Application.Common.Results.Result.Success(), "SMS bağlantı testi başarılı (Mock).");
     }
 
     [HttpPost("sms/send-test")]
@@ -244,9 +244,9 @@ public class SystemSettingsController : BaseController
             var dto = result.Value;
             dto.MaintenanceModeEnabled = true;
             var updateResult = await _maintenanceModeSettingsService.UpdateMaintenanceModeSettingsAsync(dto, this.UserId, cancellationToken);
-            return HandleResult(updateResult, "BakÄ±m modu aktifleÅŸtirildi.");
+            return HandleResult(updateResult, "Bakım modu aktifleştirildi.");
         }
-        return HandleResult(EIskele.Application.Common.Results.Result.Failure("UPDATE_FAILED", "BakÄ±m modu gÃ¼ncellenemedi."));
+        return HandleResult(EIskele.Application.Common.Results.Result.Failure("UPDATE_FAILED", "Bakım modu güncellenemedi."));
     }
 
     [HttpPost("maintenance/disable")]
@@ -259,9 +259,9 @@ public class SystemSettingsController : BaseController
             var dto = result.Value;
             dto.MaintenanceModeEnabled = false;
             var updateResult = await _maintenanceModeSettingsService.UpdateMaintenanceModeSettingsAsync(dto, this.UserId, cancellationToken);
-            return HandleResult(updateResult, "BakÄ±m modu deaktif edildi.");
+            return HandleResult(updateResult, "Bakım modu deaktif edildi.");
         }
-        return HandleResult(EIskele.Application.Common.Results.Result.Failure("UPDATE_FAILED", "BakÄ±m modu gÃ¼ncellenemedi."));
+        return HandleResult(EIskele.Application.Common.Results.Result.Failure("UPDATE_FAILED", "Bakım modu güncellenemedi."));
     }
 
     [HttpGet("audit-logs")]

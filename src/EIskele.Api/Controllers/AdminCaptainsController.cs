@@ -80,4 +80,11 @@ public class AdminCaptainsController : BaseController
         var result = await _captainService.RejectDocumentAsync(documentId, reason, cancellationToken);
         return HandleResult(result);
     }
+
+    [HttpDelete("documents/{documentId:guid}")]
+    public async Task<IActionResult> DeleteDocument(Guid documentId, CancellationToken cancellationToken)
+    {
+        var result = await _captainService.DeleteDocumentAsync(documentId, cancellationToken);
+        return HandleResult(result);
+    }
 }

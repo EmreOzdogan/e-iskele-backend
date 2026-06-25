@@ -26,7 +26,7 @@ public class CaptainDocumentsController : BaseController
     {
         var userId = this.UserId;
         if (userId == Guid.Empty)
-            return Unauthorized(ApiResponse.CreateFailure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _documentsService.GetCaptainDocumentsAsync(userId, cancellationToken);
         return HandleResult(result);
@@ -36,11 +36,11 @@ public class CaptainDocumentsController : BaseController
     public async Task<IActionResult> UploadDocument(string documentId, IFormFile file, [FromForm] UploadCaptainDocumentRequest request, CancellationToken cancellationToken)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(ApiResponse.CreateFailure("INVALID_FILE", "Dosya boş olamaz."));
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("INVALID_FILE", "Dosya boş olamaz."));
 
         var userId = this.UserId;
         if (userId == Guid.Empty)
-            return Unauthorized(ApiResponse.CreateFailure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("UNAUTHORIZED", "Kullanıcı doğrulanamadı."));
 
         var result = await _documentsService.UploadDocumentAsync(userId, documentId, file.OpenReadStream(), file.FileName, file.ContentType, request, cancellationToken);
         return HandleResult(result);

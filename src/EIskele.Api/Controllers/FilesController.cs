@@ -27,7 +27,7 @@ public class FilesController : BaseController
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest(ApiResponse.CreateFailure("INVALID_FILE", "Dosya seçilmedi veya boş."));
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("INVALID_FILE", "Dosya seçilmedi veya boş."));
         }
 
         var request = new FileUploadRequest
@@ -45,10 +45,10 @@ public class FilesController : BaseController
         var result = await _fileStorageService.UploadAsync(request, cancellationToken);
         if (!result.Success)
         {
-            return BadRequest(ApiResponse.CreateFailure("UPLOAD_FAILED", "Dosya yüklenirken bir hata oluştu."));
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("UPLOAD_FAILED", "Dosya yüklenirken bir hata oluştu."));
         }
 
-        return Ok(ApiResponse<FileUploadResult>.CreateSuccess(result));
+        return HandleResult(EIskele.Application.Common.Results.Result<FileUploadResult>.Success(result));
     }
 
     [HttpGet("{id:guid}/download")]
@@ -67,7 +67,7 @@ public class FilesController : BaseController
 
         if (string.IsNullOrEmpty(file.StoragePath))
         {
-            return NotFound(ApiResponse.CreateFailure("STORAGE_NOT_FOUND", "Fiziksel dosya bulunamadı."));
+            return HandleResult(EIskele.Application.Common.Results.Result.Failure("NOT_FOUND", "Fiziksel dosya bulunamadı."));
         }
 
         try
@@ -75,7 +75,7 @@ public class FilesController : BaseController
             var stream = await _fileStorageService.DownloadAsync(file.StoragePath, cancellationToken);
             if (stream == null)
             {
-                return NotFound(ApiResponse.CreateFailure("FILE_MISSING", "Dosya sunucuda bulunamadı."));
+                return HandleResult(EIskele.Application.Common.Results.Result.Failure("NOT_FOUND", "Dosya sunucuda bulunamadı."));
             }
 
             var mimeType = !string.IsNullOrEmpty(file.MimeType) ? file.MimeType : "application/octet-stream";

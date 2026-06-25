@@ -51,7 +51,7 @@ public class LocalFileStorageService : IFileStorageService
             OwnerUserId = request.OwnerUserId,
             RelatedEntityType = request.RelatedEntityType,
             RelatedEntityId = request.RelatedEntityId,
-            FileType = Enum.Parse<StoredFileType>(request.FileType, true),
+            FileType = request.FileType,
             OriginalFileName = request.OriginalFileName,
             StoredFileName = uniqueFileName,
             MimeType = request.ContentType,
