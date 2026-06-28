@@ -7,6 +7,6 @@ namespace EIskele.Application.Availability;
 
 public interface IAvailabilityService
 {
-    Task<Result<IEnumerable<AvailabilitySlotResponse>>> CheckAvailabilityAsync(CheckAvailabilityRequest request, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<AvailabilitySlotDto>>> CheckAvailabilityAsync(CheckAvailabilityRequest request, CancellationToken cancellationToken = default);
     Task<Result> BlockDatesAsync(BlockDatesRequest request, CancellationToken cancellationToken = default);
 }

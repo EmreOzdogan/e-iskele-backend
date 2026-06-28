@@ -17,11 +17,14 @@ public class BlockDatesRequest
     public string Reason { get; set; } = string.Empty;
 }
 
-public class AvailabilitySlotResponse
+public class AvailabilitySlotDto
 {
     public Guid Id { get; set; }
     public Guid BoatId { get; set; }
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string? Reason { get; set; }
+    public Guid? TourPackageId { get; set; }
+    public int? Capacity { get; set; }
 }
