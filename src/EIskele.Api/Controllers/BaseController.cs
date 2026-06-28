@@ -30,6 +30,7 @@ public abstract class BaseController : ControllerBase
             "CONFLICT" => Conflict(ApiResponse.CreateFailure(result.Error.Code, result.Error.Message)),
             "UNAUTHORIZED" => Unauthorized(ApiResponse.CreateFailure(result.Error.Code, result.Error.Message)),
             "FORBIDDEN" => StatusCode(403, ApiResponse.CreateFailure(result.Error.Code, result.Error.Message)),
+            "INTERNAL_SERVER_ERROR" or "ServerError" => StatusCode(500, ApiResponse.CreateFailure(result.Error.Code, result.Error.Message)),
             _ => BadRequest(ApiResponse.CreateFailure(result.Error.Code, result.Error.Message))
         };
     }
@@ -47,6 +48,7 @@ public abstract class BaseController : ControllerBase
             "CONFLICT" => Conflict(ApiResponse<T>.CreateFailure(result.Error.Code, result.Error.Message)),
             "UNAUTHORIZED" => Unauthorized(ApiResponse<T>.CreateFailure(result.Error.Code, result.Error.Message)),
             "FORBIDDEN" => StatusCode(403, ApiResponse<T>.CreateFailure(result.Error.Code, result.Error.Message)),
+            "INTERNAL_SERVER_ERROR" or "ServerError" => StatusCode(500, ApiResponse<T>.CreateFailure(result.Error.Code, result.Error.Message)),
             _ => BadRequest(ApiResponse<T>.CreateFailure(result.Error.Code, result.Error.Message))
         };
     }

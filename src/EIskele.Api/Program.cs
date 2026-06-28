@@ -92,6 +92,25 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!))
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = context =>
+        {
+            context.HandleResponse();
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(EIskele.Shared.Responses.ApiResponse.CreateFailure("UNAUTHORIZED", "Bu işlemi yapmak için giriş yapmalısınız."));
+            return context.Response.WriteAsync(result);
+        },
+        OnForbidden = context =>
+        {
+            context.Response.StatusCode = 403;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(EIskele.Shared.Responses.ApiResponse.CreateFailure("FORBIDDEN", "Bu işlemi yapmak için yetkiniz yok."));
+            return context.Response.WriteAsync(result);
+        }
+    };
 });
 
 builder.Services.AddControllers()
@@ -168,6 +187,16 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseMiddleware<EIskele.Api.Middlewares.GlobalExceptionMiddleware>();
+
+app.UseStatusCodePages(async context =>
+{
+    if (context.HttpContext.Response.StatusCode == 404 && !context.HttpContext.Response.HasStarted)
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(EIskele.Shared.Responses.ApiResponse.CreateFailure("NOT_FOUND", "İstenen kaynak bulunamadı."));
+        await context.HttpContext.Response.WriteAsync(result);
+    }
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

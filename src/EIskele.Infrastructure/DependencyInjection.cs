@@ -64,6 +64,10 @@ public static class DependencyInjection
         services.AddScoped<EIskele.Application.Layout.ICaptainLayoutService, EIskele.Infrastructure.Services.CaptainLayoutService>();
         services.AddScoped<EIskele.Application.Captains.ICaptainDocumentsService, EIskele.Infrastructure.Services.CaptainDocumentsService>();
 
+        services.AddScoped<EIskele.Application.SupportTickets.ISupportTicketService, EIskele.Infrastructure.SupportTickets.SupportTicketService>();
+        services.AddScoped<EIskele.Application.Payouts.IPayoutService, EIskele.Infrastructure.Payouts.PayoutService>();
+        services.AddScoped<EIskele.Application.Companies.ICompanyService, EIskele.Infrastructure.Companies.CompanyService>();
+
         return services;
     }
 }

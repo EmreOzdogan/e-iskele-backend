@@ -1,10 +1,13 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EIskele.Application.Common.Audit;
+using EIskele.Application.Common.Results;
 using EIskele.Domain.Entities;
 using EIskele.Persistence;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace EIskele.Infrastructure.Audit;
 
@@ -51,5 +54,51 @@ public class AuditLogService : IAuditLogService
 
         _dbContext.AuditLogs.Add(auditLog);
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Result<PagedResult<AuditLogDto>>> GetAuditLogsAsync(int page = 1, int pageSize = 20, string? search = null, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.AuditLogs.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(x => 
+                x.Action.Contains(search) || 
+                x.EntityType.Contains(search) || 
+                x.Description.Contains(search));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new AuditLogDto
+            {
+                Id = x.Id,
+                ActorUserId = x.ActorUserId,
+                ActorRole = x.ActorRole,
+                Action = x.Action,
+                EntityType = x.EntityType,
+                EntityId = x.EntityId,
+                OldValue = x.OldValue,
+                NewValue = x.NewValue,
+                Description = x.Description,
+                CreatedAt = x.CreatedAt,
+                IpAddress = x.IpAddress,
+                TraceId = x.TraceId
+            })
+            .ToListAsync(cancellationToken);
+
+        var pagedResult = new PagedResult<AuditLogDto>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+
+        return Result<PagedResult<AuditLogDto>>.Success(pagedResult);
     }
 }
