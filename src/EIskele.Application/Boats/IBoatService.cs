@@ -17,6 +17,8 @@ public interface IBoatService
     Task<Result<CaptainBoatDetailDto>> GetMyBoatDetailAsync(Guid boatId, Guid userId, CancellationToken cancellationToken = default);
     Task<Result> UpdateMyBoatAsync(Guid boatId, Guid userId, UpdateCaptainBoatRequest request, CancellationToken cancellationToken = default);
     Task<Result<BoatResponse>> CreateMyBoatAsync(Guid userId, CreateCaptainBoatRequest request, CancellationToken cancellationToken = default);
+    Task<Result> DeactivateMyBoatAsync(Guid boatId, Guid userId, CancellationToken cancellationToken = default);
+    Task<Result> DeleteMyBoatAsync(Guid boatId, Guid userId, CancellationToken cancellationToken = default);
 
 
     Task<Result<PagedResult<AdminBoatListItemDto>>> GetAdminBoatsAsync(

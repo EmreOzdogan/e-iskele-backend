@@ -193,8 +193,21 @@ public partial class BoatService : IBoatService
             Capacity = b.Capacity,
             TotalPackageCount = b.TourPackages.Count,
             ActivePackageCount = b.TourPackages.Count(p => p.IsActive),
-            ReviewStatus = b.Status.ToString(),
-            PublishStatus = b.Status == BoatStatus.Published ? "published" : "notPublished",
+            ReviewStatus = b.Status switch {
+                BoatStatus.Draft => "draft",
+                BoatStatus.UnderReview => "inReview",
+                BoatStatus.Published => "approved",
+                BoatStatus.Passive => "approved",
+                BoatStatus.Rejected => "rejected",
+                BoatStatus.Suspended => "suspended",
+                _ => "inReview"
+            },
+            PublishStatus = b.Status switch {
+                BoatStatus.Published => "published",
+                BoatStatus.Passive => "passive",
+                BoatStatus.Suspended => "suspended",
+                _ => "notPublished"
+            },
             DocumentStatus = "completed",
             UpdatedAt = b.UpdatedAt
         }).ToList();

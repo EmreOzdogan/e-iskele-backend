@@ -23,7 +23,7 @@ public class FilesController : BaseController
 
     [HttpPost("upload")]
     [AllowAnonymous]
-    public async Task<IActionResult> Upload(IFormFile file, [FromForm] string fileType, [FromForm] bool isPublic = false, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Upload(IFormFile file, [FromForm] string fileType, [FromForm] string? relatedEntityType = null, [FromForm] string? relatedEntityId = null, [FromForm] bool isPublic = false, CancellationToken cancellationToken = default)
     {
         if (file == null || file.Length == 0)
         {
@@ -36,8 +36,8 @@ public class FilesController : BaseController
             OriginalFileName = file.FileName,
             ContentType = file.ContentType,
             OwnerUserId = this.UserId,
-            RelatedEntityType = "CaptainApplication", // Varsayılan olarak başvuru diyelim, isterseniz parametre alabiliriz
-            RelatedEntityId = string.Empty, // Başvuru ID'si henüz oluşmadığı için boş kalabilir
+            RelatedEntityType = relatedEntityType ?? "CaptainApplication",
+            RelatedEntityId = relatedEntityId ?? string.Empty,
             FileType = fileType,
             IsPublic = isPublic
         };
@@ -85,5 +85,13 @@ public class FilesController : BaseController
         {
             return StatusCode(500, ApiResponse.CreateFailure("DOWNLOAD_ERROR", "Dosya indirilirken hata oluştu: " + ex.Message));
         }
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    {
+        var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+        var result = await _storedFileService.DeleteFileRecordAsync(id, this.UserId, isAdmin, cancellationToken);
+        return HandleResult(result);
     }
 }

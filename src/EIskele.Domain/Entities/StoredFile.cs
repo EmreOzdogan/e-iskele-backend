@@ -20,6 +20,7 @@ public class StoredFile : BaseEntity, ISoftDeletableEntity
     public string PublicUrl { get; set; } = string.Empty;
     public bool IsPublic { get; set; }
     public StoredFileStatus Status { get; set; } = StoredFileStatus.Pending;
+    public DateTime? ValidUntil { get; set; }
     
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }

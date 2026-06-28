@@ -26,19 +26,35 @@ public partial class BoatService
         var boats = await _dbContext.Boats
             .Include(b => b.Location)
             .Include(b => b.Harbor)
+            .Include(b => b.TourPackages)
+            .Include(b => b.Reservations)
             .Where(b => b.CaptainId == captain.Id)
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        var dtos = boats.Select(b => new CaptainBoatListItemDto
+        var boatIdsStr = boats.Select(b => b.Id.ToString()).ToList();
+        var boatCoverImageFileType = EIskele.Domain.Enums.StoredFileType.BoatCoverImage.ToString();
+        var boatCoverImages = await _dbContext.StoredFiles
+            .Where(f => f.RelatedEntityType == "Boat" && boatIdsStr.Contains(f.RelatedEntityId) && f.FileType == boatCoverImageFileType)
+            .ToListAsync(cancellationToken);
+
+        var dtos = boats.Select(b => 
         {
-            Id = b.Id,
-            Name = b.Name,
-            Status = b.Status.ToString(),
-            Capacity = b.Capacity,
-            LocationName = b.Location?.Name ?? string.Empty,
-            HarborName = b.Harbor?.Name ?? string.Empty,
-            CreatedAt = b.CreatedAt
+            var coverImage = boatCoverImages.FirstOrDefault(f => f.RelatedEntityId == b.Id.ToString());
+            return new CaptainBoatListItemDto
+            {
+                Id = b.Id,
+                Name = b.Name,
+                BoatType = b.BoatType,
+                Status = b.Status.ToString(),
+                Capacity = b.Capacity,
+                LocationName = b.Location?.Name ?? string.Empty,
+                HarborName = b.Harbor?.Name ?? string.Empty,
+                CoverImageUrl = coverImage?.PublicUrl,
+                ActivePackageCount = b.TourPackages.Count(p => p.IsActive),
+                UpcomingReservationCount = b.Reservations.Count(r => r.Status == ReservationStatus.Approved || r.Status == ReservationStatus.Paid),
+                CreatedAt = b.CreatedAt
+            };
         }).ToList();
 
         return Result<List<CaptainBoatListItemDto>>.Success(dtos);
@@ -65,6 +81,10 @@ public partial class BoatService
             return Result<CaptainBoatDetailDto>.Failure("BOAT_NOT_FOUND", "Tekne bulunamadı veya bu tekneye erişim yetkiniz yok.");
         }
 
+        var files = await _dbContext.StoredFiles
+            .Where(f => f.RelatedEntityType == "Boat" && f.RelatedEntityId == boat.Id.ToString())
+            .ToListAsync(cancellationToken);
+
         var dto = new CaptainBoatDetailDto
         {
             Id = boat.Id,
@@ -78,7 +98,23 @@ public partial class BoatService
             BoatType = boat.BoatType,
             ProductionYear = boat.ProductionYear,
             Length = boat.Length,
-            Features = boat.BoatFeatures.Where(f => f.IsAvailable).Select(f => f.Name).ToList()
+            Features = boat.BoatFeatures.Where(f => f.IsAvailable).Select(f => f.Name).ToList(),
+            Images = files.Where(f => f.FileType == "BoatImage" || f.FileType == "BoatCoverImage").Select(f => new StoredFileDto
+            {
+                Id = f.Id,
+                OriginalFileName = f.OriginalFileName,
+                FileType = f.FileType,
+                PublicUrl = $"/api/files/{f.Id}/download",
+                CreatedAt = f.CreatedAt
+            }).OrderBy(f => f.CreatedAt).ToList(),
+            Documents = files.Where(f => f.FileType == "BoatLicenseDocument" || f.FileType == "InsuranceDocument").Select(f => new StoredFileDto
+            {
+                Id = f.Id,
+                OriginalFileName = f.OriginalFileName,
+                FileType = f.FileType,
+                PublicUrl = $"/api/files/{f.Id}/download",
+                CreatedAt = f.CreatedAt
+            }).OrderBy(f => f.CreatedAt).ToList()
         };
 
         return Result<CaptainBoatDetailDto>.Success(dto);
@@ -189,5 +225,65 @@ public partial class BoatService
             Id = boat.Id,
             Status = boat.Status.ToString()
         });
+    }
+
+    public async Task<Result> DeactivateMyBoatAsync(Guid boatId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var captain = await _dbContext.Captains
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+
+        if (captain == null)
+        {
+            return Result.Failure("CAPTAIN_NOT_FOUND", "Kaptan profili bulunamadı.");
+        }
+
+        var boat = await _dbContext.Boats
+            .FirstOrDefaultAsync(b => b.Id == boatId && b.CaptainId == captain.Id, cancellationToken);
+
+        if (boat == null)
+        {
+            return Result.Failure("BOAT_NOT_FOUND", "Tekne bulunamadı veya bu tekneye erişim yetkiniz yok.");
+        }
+
+        if (boat.Status == BoatStatus.Draft || boat.Status == BoatStatus.Rejected || boat.Status == BoatStatus.Suspended)
+        {
+            return Result.Failure("INVALID_STATUS", "Bu durumdaki tekne pasife alınamaz.");
+        }
+
+        boat.Status = BoatStatus.Passive;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> DeleteMyBoatAsync(Guid boatId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var captain = await _dbContext.Captains
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+
+        if (captain == null)
+        {
+            return Result.Failure("CAPTAIN_NOT_FOUND", "Kaptan profili bulunamadı.");
+        }
+
+        var boat = await _dbContext.Boats
+            .FirstOrDefaultAsync(b => b.Id == boatId && b.CaptainId == captain.Id, cancellationToken);
+
+        if (boat == null)
+        {
+            return Result.Failure("BOAT_NOT_FOUND", "Tekne bulunamadı veya bu tekneye erişim yetkiniz yok.");
+        }
+
+        // Soft delete logic
+        boat.IsDeleted = true;
+        boat.DeletedAt = DateTime.UtcNow;
+        boat.DeletedBy = userId;
+
+        // Also deactivate packages associated with this boat? Not strictly required if global query filter covers relations,
+        // but it is safer to also soft delete them or at least set them to inactive, but for now just deleting the boat is fine.
+        
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
     }
 }

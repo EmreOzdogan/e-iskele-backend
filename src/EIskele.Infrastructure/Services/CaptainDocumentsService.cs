@@ -58,9 +58,10 @@ public class CaptainDocumentsService : ICaptainDocumentsService
 
             if (matchedFile != null)
             {
-                expectedDoc.Status = char.ToLowerInvariant(matchedFile.Status.ToString()[0]) + matchedFile.Status.ToString().Substring(1); 
+                expectedDoc.Status = matchedFile.Status == StoredFileStatus.Pending ? "pendingReview" : char.ToLowerInvariant(matchedFile.Status.ToString()[0]) + matchedFile.Status.ToString().Substring(1); 
                 expectedDoc.FileName = matchedFile.OriginalFileName;
                 expectedDoc.UploadedAtText = matchedFile.CreatedAt.ToString("dd MMMM yyyy");
+                expectedDoc.ValidUntilText = matchedFile.ValidUntil?.ToString("dd MMMM yyyy");
 
                 if (lastReject != null && expectedDoc.Status == "rejected")
                 {
@@ -200,13 +201,20 @@ public class CaptainDocumentsService : ICaptainDocumentsService
         if (newFile != null)
         {
             newFile.Status = StoredFileStatus.Pending;
+            newFile.ValidUntil = request.ValidUntil;
+
+            var description = "Belge sisteme yüklendi.";
+            if (!string.IsNullOrWhiteSpace(request.Note))
+            {
+                description += $" Kaptan Notu: {request.Note}";
+            }
 
             var audit = new EIskele.Domain.Entities.AuditLog
             {
                 Action = "UploadDocument",
                 EntityType = $"CaptainDocument_{documentId}",
                 EntityId = userId.ToString(),
-                Description = "Belge sisteme yüklendi."
+                Description = description
             };
             _dbContext.AuditLogs.Add(audit);
 

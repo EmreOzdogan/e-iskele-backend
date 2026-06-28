@@ -21,13 +21,13 @@ public class AvailabilityService : IAvailabilityService
         _dbContext = dbContext;
     }
 
-    public async Task<Result<IEnumerable<AvailabilitySlotResponse>>> CheckAvailabilityAsync(CheckAvailabilityRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<AvailabilitySlotDto>>> CheckAvailabilityAsync(CheckAvailabilityRequest request, CancellationToken cancellationToken = default)
     {
         var slots = await _dbContext.AvailabilitySlots
             .Where(s => s.BoatId == request.BoatId && s.StartDateTime >= request.StartDate && s.EndDateTime <= request.EndDate)
             .ToListAsync(cancellationToken);
 
-        var response = slots.Select(s => new AvailabilitySlotResponse
+        var response = slots.Select(s => new AvailabilitySlotDto
         {
             Id = s.Id,
             BoatId = s.BoatId,
@@ -36,7 +36,7 @@ public class AvailabilityService : IAvailabilityService
             Status = s.Status.ToString()
         });
 
-        return Result<IEnumerable<AvailabilitySlotResponse>>.Success(response);
+        return Result<IEnumerable<AvailabilitySlotDto>>.Success(response);
     }
 
     public async Task<Result> BlockDatesAsync(BlockDatesRequest request, CancellationToken cancellationToken = default)

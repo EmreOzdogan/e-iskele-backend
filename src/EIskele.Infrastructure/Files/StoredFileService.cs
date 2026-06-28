@@ -42,4 +42,22 @@ public class StoredFileService : IStoredFileService
 
         return Result<StoredFile>.Success(file);
     }
+
+    public async Task<Result> DeleteFileRecordAsync(Guid fileId, Guid currentUserId, bool isAdmin, CancellationToken cancellationToken = default)
+    {
+        var fileResult = await GetFileRecordAsync(fileId, currentUserId, isAdmin, cancellationToken);
+        if (!fileResult.IsSuccess)
+        {
+            return Result.Failure(fileResult.Error.Code, fileResult.Error.Message);
+        }
+
+        var file = fileResult.Value;
+        file.IsDeleted = true;
+        file.DeletedAt = DateTime.UtcNow;
+        file.DeletedBy = currentUserId;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
 }

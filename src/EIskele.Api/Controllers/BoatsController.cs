@@ -81,4 +81,20 @@ public class BoatsController : BaseController
         var result = await _boatService.CreateMyBoatAsync(UserId, request, cancellationToken);
         return HandleResult(result);
     }
+
+    [HttpPost("{id:guid}/deactivate")]
+    [Authorize(Roles = "Captain")]
+    public async Task<IActionResult> DeactivateMyBoat(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.DeactivateMyBoatAsync(id, UserId, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Captain")]
+    public async Task<IActionResult> DeleteMyBoat(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _boatService.DeleteMyBoatAsync(id, UserId, cancellationToken);
+        return HandleResult(result);
+    }
 }

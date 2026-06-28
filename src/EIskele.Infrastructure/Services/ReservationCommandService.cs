@@ -55,7 +55,7 @@ public class ReservationCommandService : IReservationCommandService
                 return Result<ReservationResponse>.Failure("RESERVATION.INVALID_GUEST_COUNT", $"Kişi sayısı {package.MinCapacity} ile {package.MaxCapacity} arasında olmalıdır.");
             }
 
-            // Çakışma Kontrolü
+            // Çakışma Kontrolü - Diğer rezervasyonlar
             var hasConflict = await _dbContext.Reservations
                 .Where(r => r.BoatId == request.BoatId && r.Status != ReservationStatus.Cancelled && r.Status != ReservationStatus.Rejected)
                 .AnyAsync(r => request.StartDateTime < r.EndDateTime && request.EndDateTime > r.StartDateTime, cancellationToken);
@@ -64,6 +64,17 @@ public class ReservationCommandService : IReservationCommandService
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return Result<ReservationResponse>.Failure("RESERVATION.CONFLICT", "Seçilen tarih ve saat aralığında bu tekne için başka bir rezervasyon bulunmaktadır.");
+            }
+
+            // Çakışma Kontrolü - AvailabilitySlots (Kapalı veya Bakımda)
+            var hasClosedSlot = await _dbContext.AvailabilitySlots
+                .Where(s => s.BoatId == request.BoatId && (s.Status == AvailabilitySlotStatus.Closed || s.Status == AvailabilitySlotStatus.Maintenance))
+                .AnyAsync(s => request.StartDateTime < s.EndDateTime && request.EndDateTime > s.StartDateTime, cancellationToken);
+
+            if (hasClosedSlot)
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return Result<ReservationResponse>.Failure("RESERVATION.SLOT_UNAVAILABLE", "Seçilen tarih ve saat aralığında bu tekne müsait değildir (kapalı veya bakımda).");
             }
 
             var reservation = new Reservation

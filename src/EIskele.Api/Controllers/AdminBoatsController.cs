@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EIskele.Api.Controllers;
 
+[Authorize(Roles = "Admin,SuperAdmin")]
 [Route("api/admin/boats")]
 public class AdminBoatsController : BaseController
 {

@@ -7,10 +7,14 @@ public class CaptainBoatListItemDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string BoatType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public int Capacity { get; set; }
     public string LocationName { get; set; } = string.Empty;
     public string HarborName { get; set; } = string.Empty;
+    public string? CoverImageUrl { get; set; }
+    public int ActivePackageCount { get; set; }
+    public int UpcomingReservationCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -28,6 +32,17 @@ public class CaptainBoatDetailDto
     public string ProductionYear { get; set; } = string.Empty;
     public string Length { get; set; } = string.Empty;
     public List<string> Features { get; set; } = new();
+    public List<StoredFileDto> Images { get; set; } = new();
+    public List<StoredFileDto> Documents { get; set; } = new();
+}
+
+public class StoredFileDto
+{
+    public Guid Id { get; set; }
+    public string OriginalFileName { get; set; } = string.Empty;
+    public string FileType { get; set; } = string.Empty;
+    public string PublicUrl { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
 }
 
 public class UpdateCaptainBoatRequest

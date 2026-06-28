@@ -33,13 +33,13 @@ public partial class BoatService
             Id = boat.Id,
             BoatNo = $"BOAT-{boat.CreatedAt.Year}-{boat.Id.ToString().Substring(0, 4).ToUpper()}",
             BoatName = boat.Name,
-            BoatType = "Motoryat", // Placeholder as it's not in entity
-            BrandModel = "Bilinmiyor",
-            ProductionYear = null,
-            Length = null,
+            BoatType = string.IsNullOrWhiteSpace(boat.BoatType) ? "Bilinmiyor" : boat.BoatType,
+            BrandModel = string.IsNullOrWhiteSpace(boat.BrandModel) ? "Bilinmiyor" : boat.BrandModel,
+            ProductionYear = int.TryParse(boat.ProductionYear, out var pYear) ? pYear : null,
+            Length = decimal.TryParse(boat.Length, out var bLen) ? bLen : null,
             Capacity = boat.Capacity,
-            LicenseNo = "RH-1234-5678", // Placeholder
-            Description = "Açıklama",
+            LicenseNo = "Bilinmiyor", // License no will be retrieved from documents later if needed
+            Description = boat.Description,
             
             CaptainId = boat.CaptainId,
             CaptainName = boat.Captain.User.FirstName + " " + boat.Captain.User.LastName,
@@ -55,9 +55,22 @@ public partial class BoatService
             TotalPackageCount = boat.TourPackages.Count,
 
             BoatStatus = boat.Status.ToString(),
-            PublishStatus = boat.Status == BoatStatus.Published ? "Yayında" : "Yayında Değil",
-            ReviewStatus = boat.Status == BoatStatus.UnderReview ? "İncelemede" : "Kontrol Edildi",
-            DocumentStatus = "Kontrol Bekliyor", // Placeholder
+            PublishStatus = boat.Status switch {
+                BoatStatus.Published => "published",
+                BoatStatus.Passive => "passive",
+                BoatStatus.Suspended => "suspended",
+                _ => "notPublished"
+            },
+            ReviewStatus = boat.Status switch {
+                BoatStatus.Draft => "draft",
+                BoatStatus.UnderReview => "inReview",
+                BoatStatus.Published => "approved",
+                BoatStatus.Passive => "approved",
+                BoatStatus.Rejected => "rejected",
+                BoatStatus.Suspended => "suspended",
+                _ => "inReview"
+            },
+            DocumentStatus = "completed",
 
             UpdatedAt = boat.UpdatedAt,
             SubmittedAt = boat.CreatedAt
@@ -78,16 +91,10 @@ public partial class BoatService
             Id = f.Id,
             ImageUrl = f.PublicUrl,
             ImageType = f.FileType == StoredFileType.BoatCoverImage.ToString() ? "cover" : "gallery",
-            Status = f.Status.ToString(),
+            Status = f.Status == EIskele.Domain.Enums.StoredFileStatus.Pending ? "pendingReview" : f.Status == EIskele.Domain.Enums.StoredFileStatus.Approved ? "approved" : "rejected",
             FileName = f.OriginalFileName,
             UploadedAt = f.CreatedAt
         }).ToList();
-
-        // Add mock image if empty for testing Admin UI
-        if (!dtos.Any())
-        {
-            dtos.Add(new BoatImageDto { Id = Guid.NewGuid(), ImageUrl = "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a", ImageType = "cover", Status = "pending", FileName = "mock-cover.jpg", UploadedAt = DateTime.UtcNow });
-        }
 
         return Result<List<BoatImageDto>>.Success(dtos);
     }
@@ -102,22 +109,16 @@ public partial class BoatService
         var dtos = documents.Select(f => new BoatDocumentDto
         {
             Id = f.Id,
-            DocumentType = f.FileType.ToString(),
+            DocumentType = f.FileType == EIskele.Domain.Enums.StoredFileType.BoatLicenseDocument.ToString() ? "boatLicense" : "insurance",
             DocumentName = f.FileType == StoredFileType.BoatLicenseDocument.ToString() ? "Tekne Ruhsatı" : "Sigorta Belgesi",
             FileName = f.OriginalFileName,
             FileSize = (f.SizeInBytes / 1024) + " KB",
-            Status = f.Status.ToString(),
+            Status = f.Status == EIskele.Domain.Enums.StoredFileStatus.Pending ? "pendingReview" : f.Status == EIskele.Domain.Enums.StoredFileStatus.Approved ? "approved" : "rejected",
             UploadedAt = f.CreatedAt,
-            ValidUntil = null,
+            ValidUntil = f.ValidUntil,
             DownloadUrl = f.PublicUrl
         }).ToList();
         
-        // Add mock doc if empty
-        if (!dtos.Any())
-        {
-            dtos.Add(new BoatDocumentDto { Id = Guid.NewGuid(), DocumentType = "BoatLicense", DocumentName = "Tekne Ruhsatı", FileName = "ruhsat.pdf", FileSize = "1.2 MB", Status = "pending", UploadedAt = DateTime.UtcNow, DownloadUrl = "#" });
-        }
-
         return Result<List<BoatDocumentDto>>.Success(dtos);
     }
 
@@ -137,13 +138,6 @@ public partial class BoatService
             Status = f.Status.ToString()
         }).ToList();
 
-        // Add mock features if empty
-        if (!dtos.Any())
-        {
-            dtos.Add(new BoatFeatureDto { Id = Guid.NewGuid(), Name = "Can yeleği", Category = "safety", IsAvailable = true, Status = "Kontrol Bekliyor" });
-            dtos.Add(new BoatFeatureDto { Id = Guid.NewGuid(), Name = "WC", Category = "feature", IsAvailable = true, Status = "Uygun" });
-        }
-
         return Result<List<BoatFeatureDto>>.Success(dtos);
     }
 
@@ -158,12 +152,12 @@ public partial class BoatService
         {
             Id = p.Id,
             PackageName = p.Name,
-            TourType = "Bilinmiyor",
-            DurationHours = 0,
+            TourType = string.IsNullOrWhiteSpace(p.TourType) ? "Bilinmiyor" : p.TourType,
+            DurationHours = p.DurationHours,
             MinCapacity = p.MinCapacity,
             MaxCapacity = p.MaxCapacity,
             Price = p.Price,
-            ApprovalType = "Kaptan Onaylı",
+            ApprovalType = p.ApprovalType == ReservationApprovalType.AutoApprove ? "Otomatik Onay" : "Kaptan Onaylı",
             Status = p.IsActive ? "Aktif" : "Pasif"
         }).ToList();
 
@@ -265,3 +259,6 @@ public partial class BoatService
         return Result.Success();
     }
 }
+
+
+
