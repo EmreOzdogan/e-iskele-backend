@@ -70,9 +70,9 @@ public partial class BoatService : IBoatService
             return Result.Failure("NOT_FOUND", "Tekne bulunamadı.");
         }
 
-        if (boat.Status != BoatStatus.UnderReview)
+        if (boat.Status == BoatStatus.Published)
         {
-            return Result.Failure("BOAT.NOT_UNDER_REVIEW", "Tekne inceleme aşamasında değil.");
+            return Result.Failure("BOAT.ALREADY_PUBLISHED", "Tekne zaten yayında.");
         }
 
         boat.Status = BoatStatus.Published;
