@@ -18,6 +18,20 @@ public class AdminPackagesController : BaseController
         _packageService = packageService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetPackages([FromQuery] string? status, [FromQuery] string? search, [FromQuery] Guid? boatId, CancellationToken cancellationToken)
+    {
+        var result = await _packageService.GetAdminPackagesAsync(status, search, boatId, cancellationToken);
+        return HandleResult(result, "Paketler listelendi.");
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetPackageStats(CancellationToken cancellationToken)
+    {
+        var result = await _packageService.GetAdminPackageStatsAsync(cancellationToken);
+        return HandleResult(result, "Paket istatistikleri getirildi.");
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPackageDetail(Guid id)
     {

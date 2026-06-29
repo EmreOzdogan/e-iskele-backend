@@ -17,6 +17,10 @@ public interface ITourPackageService
     Task<Result> ReactivatePackageAsync(Guid id);
     Task<Result> AddAdminNoteAsync(Guid id, string noteType, string noteText);
 
+    // Admin Endpoints
+    Task<Result<List<AdminTourPackageListItemDto>>> GetAdminPackagesAsync(string? status, string? search, Guid? boatId, CancellationToken cancellationToken = default);
+    Task<Result<PackageStatsDto>> GetAdminPackageStatsAsync(CancellationToken cancellationToken = default);
+
     // Captain Methods
     Task<Result<List<CaptainPackageListItemDto>>> GetMyPackagesAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<Result<CaptainPackageDetailDto>> GetMyPackageDetailAsync(Guid packageId, Guid userId, CancellationToken cancellationToken = default);

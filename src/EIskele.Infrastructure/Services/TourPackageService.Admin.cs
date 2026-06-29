@@ -165,4 +165,86 @@ public partial class TourPackageService
         // For MVP, we can just return success or save to existing notes mechanism.
         return Result.Success();
     }
+
+    public async Task<Result<List<AdminTourPackageListItemDto>>> GetAdminPackagesAsync(string? status, string? search, Guid? boatId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.TourPackages
+            .Include(p => p.Boat)
+                .ThenInclude(b => b.Captain)
+                    .ThenInclude(c => c.User)
+            .Include(p => p.Boat)
+                .ThenInclude(b => b.Location)
+            .Include(p => p.Boat)
+                .ThenInclude(b => b.Harbor)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (Enum.TryParse<TourPackageStatus>(status, true, out var parsedStatus))
+            {
+                query = query.Where(p => p.Status == parsedStatus);
+            }
+        }
+
+        if (boatId.HasValue)
+        {
+            query = query.Where(p => p.BoatId == boatId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.ToLower();
+            query = query.Where(p => p.Name.ToLower().Contains(search) || 
+                                     (p.Boat != null && p.Boat.Name.ToLower().Contains(search)));
+        }
+
+        var packages = await query.OrderByDescending(p => p.CreatedAt).ToListAsync(cancellationToken);
+
+        var dtos = packages.Select(p => new AdminTourPackageListItemDto
+        {
+            Id = p.Id,
+            PackageNo = p.Id.ToString().Substring(0, 8).ToUpper(),
+            PackageName = p.Name,
+            ShortDescription = p.Description,
+            BoatId = p.BoatId,
+            BoatName = p.Boat?.Name ?? "",
+            BoatType = p.Boat?.BoatType ?? "",
+            BoatPublishStatus = p.Boat?.Status.ToString() ?? "",
+            CaptainId = p.Boat?.Captain?.Id ?? Guid.Empty,
+            CaptainName = p.Boat?.Captain?.User != null ? $"{p.Boat.Captain.User.FirstName} {p.Boat.Captain.User.LastName}" : "",
+            CaptainApplicationType = p.Boat?.Captain?.ApplicationType.ToString() ?? "",
+            CaptainStatus = p.Boat?.Captain?.Status.ToString() ?? "",
+            Location = p.Boat?.Location?.Name ?? "",
+            Harbor = p.Boat?.Harbor?.Name ?? "",
+            TourType = p.TourType,
+            Price = p.Price,
+            MinGuests = p.MinCapacity,
+            MaxGuests = p.MaxCapacity,
+            DurationText = p.DurationHours > 0 ? $"{p.DurationHours} Saat" : "Belirtilmemiş",
+            PackageStatus = p.Status.ToString(),
+            SubmittedForReviewAt = p.CreatedAt,
+            UpdatedAt = p.UpdatedAt ?? p.CreatedAt
+        }).ToList();
+
+        return Result<List<AdminTourPackageListItemDto>>.Success(dtos);
+    }
+
+    public async Task<Result<PackageStatsDto>> GetAdminPackageStatsAsync(CancellationToken cancellationToken = default)
+    {
+        var packages = await _context.TourPackages.ToListAsync(cancellationToken);
+        
+        var stats = new PackageStatsDto
+        {
+            TotalCount = packages.Count,
+            ActiveCount = packages.Count(p => p.Status == TourPackageStatus.Published),
+            InReviewCount = packages.Count(p => p.Status == TourPackageStatus.UnderReview || p.Status == TourPackageStatus.Draft),
+            PassiveCount = packages.Count(p => p.Status == TourPackageStatus.Passive),
+            RejectedCount = packages.Count(p => p.Status == TourPackageStatus.Rejected),
+            RevisionRequestedCount = 0, // Packages don't have a specific MissingDocument status
+            FeaturedCount = 0,
+            AveragePrice = packages.Any() ? packages.Average(p => p.Price) : 0
+        };
+
+        return Result<PackageStatsDto>.Success(stats);
+    }
 }
