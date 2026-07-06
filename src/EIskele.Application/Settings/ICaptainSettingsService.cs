@@ -11,4 +11,7 @@ public interface ICaptainSettingsService
     Task<Result<bool>> ChangePasswordAsync(Guid userId, ChangeCaptainPasswordDto request, CancellationToken cancellationToken);
     Task<Result<bool>> RevokeOtherSessionsAsync(Guid userId, CancellationToken cancellationToken);
     Task<Result<bool>> SaveNotificationPreferencesAsync(Guid userId, UpdateNotificationPreferencesDto request, CancellationToken cancellationToken);
+    Task<Result<bool>> UpdateApplicationAsync(Guid userId, UpdateCaptainApplicationDto request, CancellationToken cancellationToken);
+    Task<Result<bool>> SaveLegalPermissionsAsync(Guid userId, UpdateLegalPermissionsDto request, CancellationToken cancellationToken);
 }
+

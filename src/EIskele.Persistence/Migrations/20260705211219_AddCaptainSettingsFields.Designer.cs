@@ -4,6 +4,7 @@ using EIskele.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EIskele.Persistence.Migrations
 {
     [DbContext(typeof(EIskeleDbContext))]
-    partial class EIskeleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260705211219_AddCaptainSettingsFields")]
+    partial class AddCaptainSettingsFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -507,9 +510,6 @@ namespace EIskele.Persistence.Migrations
                     b.Property<string>("District")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ExperienceYears")
-                        .HasColumnType("int");
-
                     b.Property<string>("Harbor")
                         .HasColumnType("nvarchar(max)");
 
@@ -522,9 +522,6 @@ namespace EIskele.Persistence.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<string>("Languages")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LicenseNumber")
                         .IsRequired()

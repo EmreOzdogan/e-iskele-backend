@@ -60,4 +60,19 @@ public class CaptainSettingsController : BaseController
         var result = await _settingsService.SaveNotificationPreferencesAsync(UserId, request, cancellationToken);
         return HandleResult(result);
     }
+
+    [HttpPut("application")]
+    public async Task<IActionResult> UpdateApplication([FromBody] UpdateCaptainApplicationDto request, CancellationToken cancellationToken)
+    {
+        var result = await _settingsService.UpdateApplicationAsync(UserId, request, cancellationToken);
+        return HandleResult(result);
+    }
+
+    [HttpPut("legal")]
+    public async Task<IActionResult> SaveLegalPermissions([FromBody] UpdateLegalPermissionsDto request, CancellationToken cancellationToken)
+    {
+        var result = await _settingsService.SaveLegalPermissionsAsync(UserId, request, cancellationToken);
+        return HandleResult(result);
+    }
 }
+

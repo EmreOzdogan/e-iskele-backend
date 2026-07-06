@@ -11,7 +11,9 @@ public class Company : SoftDeletableEntity
     public string TaxOffice { get; set; } = string.Empty;
     public string TaxNumber { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
+    public string? TradeRegistryNumber { get; set; }
     public string? Iban { get; set; }
+
 
     // Navigation
     public Captain Captain { get; set; } = null!;

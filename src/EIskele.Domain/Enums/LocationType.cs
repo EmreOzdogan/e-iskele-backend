@@ -4,5 +4,6 @@ public enum LocationType
 {
     City = 1,
     District = 2,
-    Region = 3
+    Region = 3,
+    Neighborhood = 4
 }

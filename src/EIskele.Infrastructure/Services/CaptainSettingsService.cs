@@ -58,7 +58,8 @@ public class CaptainSettingsService : ICaptainSettingsService
                 Email = user.Email ?? string.Empty,
                 Phone = user.PhoneNumber ?? string.Empty,
                 ShortBio = captain.Bio ?? string.Empty,
-                Languages = Array.Empty<string>()
+                ExperienceYears = captain.ExperienceYears,
+                Languages = string.IsNullOrEmpty(captain.Languages) ? Array.Empty<string>() : captain.Languages.Split(',', StringSplitOptions.RemoveEmptyEntries)
             },
             Application = new CaptainApplicationDto
             {
@@ -67,7 +68,17 @@ public class CaptainSettingsService : ICaptainSettingsService
                 DocumentStatus = "Approved", // Simplified
                 VerificationLevel = "Pro",
                 AccountType = captain.ApplicationType.ToString().ToLower(),
-                ReviewStatus = captain.Status == EIskele.Domain.Enums.CaptainStatus.UnderReview ? "pendingReview" : captain.Status == EIskele.Domain.Enums.CaptainStatus.MissingDocument ? "missingInfo" : captain.Status == EIskele.Domain.Enums.CaptainStatus.Approved ? "verified" : "notStarted"
+                ReviewStatus = captain.Status == EIskele.Domain.Enums.CaptainStatus.UnderReview ? "pendingReview" : captain.Status == EIskele.Domain.Enums.CaptainStatus.MissingDocument ? "missingInfo" : captain.Status == EIskele.Domain.Enums.CaptainStatus.Approved ? "verified" : "notStarted",
+                BirthDate = user.BirthDate?.ToString("yyyy-MM-dd"),
+                Address = captain.Address,
+                City = captain.City,
+                District = captain.District,
+                LicenseInfo = captain.LicenseNumber,
+                CompanyTitle = captain.Company?.CompanyName,
+                TaxNumber = captain.Company?.TaxNumber,
+                TaxOffice = captain.Company?.TaxOffice,
+                TradeRegistryNumber = captain.Company?.TradeRegistryNumber,
+                CompanyAddress = captain.Company?.Address
             },
             Payment = new CaptainPaymentDto
             {
@@ -152,6 +163,10 @@ public class CaptainSettingsService : ICaptainSettingsService
         user.PhoneNumber = request.Phone;
         
         user.Captain.Bio = request.ShortBio;
+        user.Captain.ExperienceYears = request.ExperienceYears;
+        user.Captain.Languages = request.Languages != null && request.Languages.Any() 
+            ? string.Join(",", request.Languages) 
+            : null;
 
         await _context.SaveChangesAsync(cancellationToken);
         return Result<bool>.Success(true);
@@ -223,4 +238,68 @@ public class CaptainSettingsService : ICaptainSettingsService
         await _context.SaveChangesAsync(cancellationToken);
         return Result<bool>.Success(true);
     }
+
+    public async Task<Result<bool>> UpdateApplicationAsync(Guid userId, UpdateCaptainApplicationDto request, CancellationToken cancellationToken)
+    {
+        var user = await _context.Users
+            .Include(u => u.Captain)
+                .ThenInclude(c => c!.Company)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user == null || user.Captain == null)
+            return Result<bool>.Failure("NOT_FOUND", "Kaptan bulunamadı.");
+
+        user.BirthDate = request.BirthDate;
+        
+        user.Captain.Address = request.Address ?? string.Empty;
+        user.Captain.City = request.City;
+        user.Captain.District = request.District;
+
+        if (user.Captain.Company != null)
+        {
+            user.Captain.Company.CompanyName = request.CompanyTitle ?? user.Captain.Company.CompanyName;
+            user.Captain.Company.TaxNumber = request.TaxNumber ?? user.Captain.Company.TaxNumber;
+            user.Captain.Company.TaxOffice = request.TaxOffice ?? user.Captain.Company.TaxOffice;
+            user.Captain.Company.TradeRegistryNumber = request.TradeRegistryNumber;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<bool>> SaveLegalPermissionsAsync(Guid userId, UpdateLegalPermissionsDto request, CancellationToken cancellationToken)
+    {
+        var user = await _context.Users
+            .Include(u => u.LegalAgreements)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user == null)
+            return Result<bool>.Failure("NOT_FOUND", "Kullanıcı bulunamadı.");
+
+        void UpdateAgreement(string name, bool isAccepted)
+        {
+            var agreement = user.LegalAgreements.FirstOrDefault(a => a.AgreementName == name);
+            if (agreement == null)
+            {
+                agreement = new UserLegalAgreement
+                {
+                    UserId = userId,
+                    AgreementName = name,
+                    Version = "1.0"
+                };
+                user.LegalAgreements.Add(agreement);
+            }
+            agreement.Status = isAccepted ? "accepted" : "notAccepted";
+        }
+
+        // According to our plan, map CommercialEmail and CampaignSms to "Commercial"
+        // Also map others like "CookiePreferences", "WhatsappInfo" just in case.
+        UpdateAgreement("Commercial", request.CommercialEmail || request.CampaignSms);
+        UpdateAgreement("CookiePreferences", request.CookiePreferences);
+        UpdateAgreement("WhatsappInfo", request.WhatsappInfo);
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return Result<bool>.Success(true);
+    }
 }
+

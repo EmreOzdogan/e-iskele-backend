@@ -14,6 +14,24 @@ public class CaptainDashboardDataDto
     public List<CaptainDashboardReservationDto> PendingReservations { get; set; } = new();
     public List<CaptainDashboardBoatStatusDto> BoatStatuses { get; set; } = new();
     public List<CaptainDashboardReviewDto> RecentReviews { get; set; } = new();
+    public CaptainDashboardCalendarSummaryDto CalendarSummary { get; set; } = new();
+    public CaptainDashboardEarningsSummaryDto EarningsSummary { get; set; } = new();
+}
+
+public class CaptainDashboardCalendarSummaryDto
+{
+    public int OccupancyRate { get; set; }
+    public int AvailableDays { get; set; }
+    public int BookedDays { get; set; }
+}
+
+public class CaptainDashboardEarningsSummaryDto
+{
+    public decimal TotalEarnings { get; set; }
+    public decimal CompletedPayments { get; set; }
+    public decimal PendingPayments { get; set; }
+    public decimal PlatformCommission { get; set; }
+    public decimal EstimatedCaptainEarnings { get; set; }
 }
 
 public class CaptainDashboardMetricDto

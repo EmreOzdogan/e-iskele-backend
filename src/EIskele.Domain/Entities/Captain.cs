@@ -16,8 +16,13 @@ public class Captain : SoftDeletableEntity
     public string Location { get; set; } = string.Empty;
     public string? Harbor { get; set; }
     public string Address { get; set; } = string.Empty;
+    public string? City { get; set; }
+    public string? District { get; set; }
+
     public string? Iban { get; set; }
     public string? AdminNote { get; set; }
+    public int ExperienceYears { get; set; }
+    public string? Languages { get; set; }
     
     // Navigation
     public ApplicationUser User { get; set; } = null!;

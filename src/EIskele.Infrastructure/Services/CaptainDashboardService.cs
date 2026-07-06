@@ -160,6 +160,51 @@ public class CaptainDashboardService : ICaptainDashboardService
             DateText = r.CreatedAt.ToString("dd MMMM yyyy")
         }).ToList();
 
+        // Calendar Summary
+        var endOfMonth = startOfMonth.AddMonths(1).AddTicks(-1);
+        
+        var slots = await _context.AvailabilitySlots
+            .Where(s => s.Boat.CaptainId == captain.Id && s.StartDateTime >= startOfMonth && s.StartDateTime <= endOfMonth)
+            .ToListAsync(cancellationToken);
+            
+        // Calculate days (a slot represents a daily availability usually, if it's hourly we might need to distinct by Date, but let's count slots)
+        var availableDays = slots.Count(s => s.Status == AvailabilitySlotStatus.Available);
+        var bookedDays = slots.Count(s => s.Status == AvailabilitySlotStatus.Booked);
+        
+        int occupancyRate = 0;
+        int totalDays = availableDays + bookedDays;
+        if (totalDays > 0)
+        {
+            occupancyRate = (int)Math.Round((double)bookedDays / totalDays * 100);
+        }
+
+        response.CalendarSummary = new CaptainDashboardCalendarSummaryDto
+        {
+            AvailableDays = availableDays,
+            BookedDays = bookedDays,
+            OccupancyRate = occupancyRate
+        };
+
+        // Earnings Summary
+        var currentMonthPayments = await _context.Payments
+            .Where(p => p.Reservation.Boat.CaptainId == captain.Id && p.CreatedAt >= startOfMonth && p.CreatedAt <= endOfMonth)
+            .ToListAsync(cancellationToken);
+
+        var totalEarnings = currentMonthPayments.Where(p => p.Status == PaymentStatus.Paid || p.Status == PaymentStatus.Pending).Sum(p => p.Amount);
+        var completedPayments = currentMonthPayments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.Amount);
+        var pendingPayments = currentMonthPayments.Where(p => p.Status == PaymentStatus.Pending).Sum(p => p.Amount);
+        var platformCommission = currentMonthPayments.Where(p => p.Status == PaymentStatus.Paid || p.Status == PaymentStatus.Pending).Sum(p => p.PlatformCommission);
+        var estimatedCaptainEarnings = currentMonthPayments.Where(p => p.Status == PaymentStatus.Paid || p.Status == PaymentStatus.Pending).Sum(p => p.CaptainEarnings);
+
+        response.EarningsSummary = new CaptainDashboardEarningsSummaryDto
+        {
+            TotalEarnings = totalEarnings,
+            CompletedPayments = completedPayments,
+            PendingPayments = pendingPayments,
+            PlatformCommission = platformCommission,
+            EstimatedCaptainEarnings = estimatedCaptainEarnings
+        };
+
         return Result<CaptainDashboardDataDto>.Success(response);
     }
 }
